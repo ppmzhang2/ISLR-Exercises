@@ -1,0 +1,16 @@
+.DS_Store
+
+# ide
+.idea/
+
+# RStudio
+.RData
+.Rhistory
+
+# Rmd
+*.html
+*.pdf
+
+# jupyter notebook
+*.ipynb
+.ipynb_checkpoints/

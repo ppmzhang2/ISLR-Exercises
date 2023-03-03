@@ -1,0 +1,127 @@
+---
+title: "STAT318: 2. Regression Models"
+output: html_document
+date: "2023-02-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+import::from(magrittr, "%>%", "%$%", .into = "operators")
+```
+
+In this lab you will work through Section 3.6.
+The R code from Section 3.6 is given below.
+
+## Boston Dataset
+
+The name for this dataset is simply "boston". It has two proto-tasks: `nox`, in which the nitrous oxide level is to be predicted; and `medv`, in which the median value of a home is to be predicted.
+
+-   `crim`: per capita crime rate by town
+-   `zn`: proportion of residential land zoned for lots over 25,000 sq.ft.
+-   `indus`: proportion of non-retail business acres per town.
+-   `chas`: Charles River dummy variable (1 if tract bounds river; 0 otherwise)
+-   `nox`: nitric oxides concentration (parts per 10 million)
+-   `rm`: average number of rooms per dwelling
+-   `age`: proportion of owner-occupied units built prior to 1940
+-   `dis`: weighted distances to five Boston employment centres
+-   `rad`: index of accessibility to radial highways
+-   `tax`: full-value property-tax rate per \$10,000
+-   `ptratio`: pupil-teacher ratio by town
+-   `black`: 1000(Bk: 0.63)\^2 where Bk is the proportion of blacks by town
+-   `lstat`: % lower status of the population
+-   `medv`: Median value of owner-occupied homes in \$1000's
+
+```{r}
+MASS::Boston %>% names()
+```
+
+Visual Exploration of `lstat` and `medv`:
+
+```{r}
+plot(MASS::Boston$lstat, MASS::Boston$medv)
+```
+
+## Simple Linear Regression:
+
+```{r}
+mdl <- lm(medv ~ lstat, data = MASS::Boston)
+```
+
+There are 12 components inside a fitted model:
+
+```{r}
+mdl %>% names()
+```
+
+```{r}
+mdl %>% coef
+```
+
+```{r}
+mdl %>% summary
+```
+
+```{r}
+plot(MASS::Boston$lstat, MASS::Boston$medv, pch = "+")
+abline(mdl, lwd = 3, col = "red")
+```
+
+### Validation Plots
+
+- Fitted vs Residuals
+  - Whether linearity holds.
+    This is indicated by the mean residual value for every fitted value 
+    region being close to 0.
+    In R this is indicated by the red line being close to the dashed
+    line.
+  - Whether homoskedasticity holds, i.e. the variance is the same.
+    The spread of residuals should be approximately the same across the
+    x-axis.
+  - Whether there are outliers.
+    This is indicated by some ‘extreme’ residuals that are far from the
+    rest.
+- QQ Plot
+  - https://boostedml.com/2019/03/linear-regression-plots-how-to-read-a-qq-plot.html
+  - on the x-axis are the theoretical quantiles of a standard normal
+  - For the y-axis, consider the empirical distribution function of the
+    standardized residuals
+
+```{r}
+par(mfrow = c(2, 2))
+plot(mdl)
+# qnorm((1 - 0.5) / 506) = -3.09
+# qnorm((506 - 0.5) / 506) = 3.09
+```
+
+
+```{r}
+plot(predict(mdl), residuals(mdl))
+plot(predict(mdl), rstudent(mdl))
+plot(hatvalues(mdl))
+# which.max(hatvalues(mdl))
+```
+
+## Multiple Linear Regression
+
+```{r}
+mdl2 <- lm(medv ~ lstat + age, data = MASS::Boston)
+mdl2 %>% summary()
+mdl3 <- lm(medv ~ ., data = MASS::Boston)
+mdl3 %>% summary()
+mdl4 <- lm(medv ~ . - age, data = MASS::Boston)
+mdl4 %>% summary()
+```
+
+## Non-linear Transformations of the Predictors
+
+```{r}
+mdl5 <- lm(medv ~ lstat + I(1/lstat), data = MASS::Boston)
+mdl5 %>% summary()
+par(mfrow=c(2,2))
+plot(mdl5)
+```
+
+```{r}
+mdl6 <- lm(medv ~ I(1/lstat), data = MASS::Boston)
+mdl6 %>% summary
+```
