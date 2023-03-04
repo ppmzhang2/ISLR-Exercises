@@ -1,5 +1,5 @@
 ---
-title: "STAT318: 2. Regression Models"
+title: "ISLR-R: 2. Regression Models"
 output: html_document
 date: "2023-02-23"
 ---

@@ -1,0 +1,51 @@
+name: Publish Rmarkdown to Pages
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+# When two jobs run in parallel, cancel the older ones, to make sure that the
+# website is generated from the most recent commit.
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: Deploy R Page
+    runs-on: macOS-latest
+    steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v3
+
+      - name: Install R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Install pandoc
+        uses: r-lib/actions/setup-pandoc@v2
+
+      - name: Install tinytex
+        uses: r-lib/actions/setup-tinytex@v2
+
+      - name: Install Packages
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache-version: 2
+          needs: |
+            website
+            coverage
+
+      - name: Render Rmarkdown to all types
+        run: |
+          R -e 'for (x in list.files("rmarkdown", full.names = T)) {
+              rmarkdown::render(x, output_format = "all")
+            }'
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          publish_branch: gh-pages
+          personal_token: ${{ secrets.PERSONAL_TOKEN }}
+          publish_dir: rmarkdown
+          force_orphan: true

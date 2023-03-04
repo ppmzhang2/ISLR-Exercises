@@ -1,0 +1,16 @@
+Package: islrExercises
+Type: Package
+Title: ISLR R Exercises
+Version: 0.0.1
+Authors@R: person("Meng", "Zhang", email = "stall-breezes.0t@icloud.com",
+                  role = c("aut", "cre"))
+Description: A walk-through of R Exercises in the textbook ISLR.
+Encoding: UTF-8
+LazyData: true
+Depends: 
+    R (>= 4.2.2)
+Imports:
+    import,
+    rmarkdown,
+    dplyr,
+    ggplot2
