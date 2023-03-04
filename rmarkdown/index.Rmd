@@ -1,0 +1,13 @@
+---
+title: "ISLR Labs"
+output: html_document
+date: "2023-03-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Table of Contents
+
+- [Lab 2](./islr_lab_02.html)
