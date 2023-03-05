@@ -14,7 +14,13 @@ The R code from Section 3.6 is given below.
 
 ## Boston Dataset
 
-The name for this dataset is simply "boston". It has two proto-tasks: `nox`, in which the nitrous oxide level is to be predicted; and `medv`, in which the median value of a home is to be predicted.
+The name for this dataset is simply "boston".
+It has two proto-tasks:
+
+- `nox`, in which the nitrous oxide level is to be predicted.
+- `medv`, in which the median value of a home is to be predicted.
+
+Columns:
 
 -   `crim`: per capita crime rate by town
 -   `zn`: proportion of residential land zoned for lots over 25,000 sq.ft.
@@ -70,16 +76,13 @@ abline(mdl, lwd = 3, col = "red")
 
 - Fitted vs Residuals
   - Whether linearity holds.
-    This is indicated by the mean residual value for every fitted value 
-    region being close to 0.
-    In R this is indicated by the red line being close to the dashed
-    line.
+    This is indicated by the mean residual value for every fitted value region
+    being close to 0.
+    In R this is indicated by the red line being close to the dashed line.
   - Whether homoskedasticity holds, i.e. the variance is the same.
-    The spread of residuals should be approximately the same across the
-    x-axis.
+    The spread of residuals should be approximately the same across the x-axis.
   - Whether there are outliers.
-    This is indicated by some ‘extreme’ residuals that are far from the
-    rest.
+    This is indicated by some ‘extreme’ residuals that are far from the rest.
 - QQ Plot
   - https://boostedml.com/2019/03/linear-regression-plots-how-to-read-a-qq-plot.html
   - on the x-axis are the theoretical quantiles of a standard normal
@@ -92,7 +95,6 @@ plot(mdl)
 # qnorm((1 - 0.5) / 506) = -3.09
 # qnorm((506 - 0.5) / 506) = 3.09
 ```
-
 
 ```{r}
 plot(predict(mdl), residuals(mdl))

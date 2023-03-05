@@ -3,8 +3,13 @@
 This is a walk-through of R Exercises in the textbook:
 [An Introduction to Statistical Learning](https://www.statlearning.com/).
 
-## Page
+## Pages
 
-- [Introduction](https://ppmzhang2.github.io/ISLR-Exercises/)
-- [Lab 2 - Linear Model](https://ppmzhang2.github.io/ISLR-Exercises/islr_lab_02.html)
-- [Appendix A - Basic Stats](https://ppmzhang2.github.io/ISLR-Exercises/islr_app_a.html)
+All the `Rmarkdown` scripts are deployed to GitHub Pages
+[here](https://ppmzhang2.github.io/ISLR-Exercises/).
+
+## Reference
+
+- [GitHub Actions](https://github.com/r-lib/actions) for the R community
+- A [slide deck](https://github.com/tgerke/github-actions-with-r) introducing
+  the use of GitHub Actions with R]
