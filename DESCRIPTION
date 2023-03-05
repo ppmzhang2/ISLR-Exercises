@@ -11,6 +11,7 @@ Depends:
     R (>= 4.2.2)
 Imports:
     import,
+    xaringan,
     rmarkdown,
     dplyr,
     ggplot2

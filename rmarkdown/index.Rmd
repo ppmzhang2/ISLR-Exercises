@@ -12,3 +12,4 @@ knitr::opts_chunk$set(echo = TRUE)
 
 - [Lab 2: Linear Model](./islr_lab_02.html)
 - [Appendix A: Basic Stats](./islr_app_a.html)
+- [Appendix B: Rmarkdown Slides](./islr_app_b.html)

@@ -14,3 +14,5 @@
 # jupyter notebook
 *.ipynb
 .ipynb_checkpoints/
+
+header-attrs.js
