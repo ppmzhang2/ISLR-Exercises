@@ -38,8 +38,10 @@ jobs:
 
       - name: Render Rmarkdown to all types
         run: |
-          R -e 'for (x in list.files("rmarkdown", full.names = T)) {
-              rmarkdown::render(x, output_format = "all")
+          R -e 'for (x in list.files("rmd", full.names = T)) {
+              if (substr(x, nchar(x) - 3, nchar(x)) == ".Rmd") {
+                rmarkdown::render(x, output_format = "all")
+              }
             }'
 
       - name: Deploy
@@ -47,5 +49,5 @@ jobs:
         with:
           publish_branch: gh-pages
           personal_token: ${{ secrets.PERSONAL_TOKEN }}
-          publish_dir: rmarkdown
+          publish_dir: rmd
           force_orphan: true

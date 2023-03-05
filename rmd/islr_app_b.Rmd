@@ -9,7 +9,7 @@ date: 'Feb 26, 2023'
 output:
   xaringan::moon_reader:
     lib_dir: libs
-    css: [../static/css/custom-xaringan.css, ../static/css/custom-xaringan-extra.css]
+    css: [static/css/custom-xaringan.css, static/css/custom-xaringan-extra.css]
     seal: false
     nature:
       titleSlideClass: ["bottom", "left"]
@@ -70,7 +70,7 @@ class: left bottom hide-count
   position: absolute;
   bottom: 3%;
   right: 2%;
-  background-image: url('../static/images/shit.png');
+  background-image: url('static/images/shit.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: contain;
@@ -111,7 +111,7 @@ or to force either to be shown
 * Topic with Pictures
 
 .h-center.w-30[
-![](../static/images/fun.gif)
+![](static/images/fun.gif)
 ]
 
 ---
@@ -126,7 +126,7 @@ Inspired by [this slides](https://github.com/tgerke/github-actions-with-r).
   position: absolute;
   top: 3%;
   left: 2%;
-  background-image: url('../static/images/xaringan.png');
+  background-image: url('static/images/xaringan.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: contain;
