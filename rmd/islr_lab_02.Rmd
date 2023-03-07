@@ -12,7 +12,11 @@ import::from(magrittr, "%>%", "%$%", .into = "operators")
 In this lab you will work through Section 3.6.
 The R code from Section 3.6 is given below.
 
-## Boston Dataset
+# Boston Dataset
+
+```{r}
+import::from(MASS, Boston)
+```
 
 The name for this dataset is simply "boston".
 It has two proto-tasks:
@@ -22,35 +26,37 @@ It has two proto-tasks:
 
 Columns:
 
--   `crim`: per capita crime rate by town
--   `zn`: proportion of residential land zoned for lots over 25,000 sq.ft.
--   `indus`: proportion of non-retail business acres per town.
--   `chas`: Charles River dummy variable (1 if tract bounds river; 0 otherwise)
--   `nox`: nitric oxides concentration (parts per 10 million)
--   `rm`: average number of rooms per dwelling
--   `age`: proportion of owner-occupied units built prior to 1940
--   `dis`: weighted distances to five Boston employment centres
--   `rad`: index of accessibility to radial highways
--   `tax`: full-value property-tax rate per \$10,000
--   `ptratio`: pupil-teacher ratio by town
--   `black`: 1000(Bk: 0.63)\^2 where Bk is the proportion of blacks by town
--   `lstat`: % lower status of the population
--   `medv`: Median value of owner-occupied homes in \$1000's
+-  `crim`: per capita crime rate by town
+-  `zn`: proportion of residential land zoned for lots over 25,000 sq.ft.
+-  `indus`: proportion of non-retail business acres per town.
+-  `chas`: Charles River dummy variable (1 if tract bounds river; 0 otherwise)
+-  `nox`: nitric oxides concentration (parts per 10 million)
+-  `rm`: average number of rooms per dwelling
+-  `age`: proportion of owner-occupied units built prior to 1940
+-  `dis`: weighted distances to five Boston employment centres
+-  `rad`: index of accessibility to radial highways
+-  `tax`: full-value property-tax rate per \$10,000
+-  `ptratio`: pupil-teacher ratio by town
+-  `black`: 1000(Bk: 0.63)\^2 where Bk is the proportion of blacks by town
+-  `lstat`: % lower status of the population
+-  `medv`: Median value of owner-occupied homes in \$1000's
 
 ```{r}
-MASS::Boston %>% names()
+Boston %>% names()
+Boston %>% dim()
 ```
 
 Visual Exploration of `lstat` and `medv`:
 
 ```{r}
-plot(MASS::Boston$lstat, MASS::Boston$medv)
+Boston %$% plot(lstat, medv)
 ```
 
-## Simple Linear Regression:
+# Simple Linear Regression:
 
 ```{r}
-mdl <- lm(medv ~ lstat, data = MASS::Boston)
+# mdl <- lm(medv ~ lstat, data = Boston) # old fashioned
+mdl <- Boston %$% lm(medv ~ lstat)
 ```
 
 There are 12 components inside a fitted model:
@@ -59,35 +65,21 @@ There are 12 components inside a fitted model:
 mdl %>% names()
 ```
 
-```{r}
-mdl %>% coef
+```{r eval=FALSE}
+mdl$xlevels # a record of the levels of the factors used in fitting
+mdl$df.residual # degree of freedom
 ```
 
 ```{r}
-mdl %>% summary
+mdl %>% summary()
 ```
 
 ```{r}
-plot(MASS::Boston$lstat, MASS::Boston$medv, pch = "+")
+Boston %$% plot(lstat, medv, pch = "+")
 abline(mdl, lwd = 3, col = "red")
 ```
 
-### Validation Plots
-
-- Fitted vs Residuals
-  - Whether linearity holds.
-    This is indicated by the mean residual value for every fitted value region
-    being close to 0.
-    In R this is indicated by the red line being close to the dashed line.
-  - Whether homoskedasticity holds, i.e. the variance is the same.
-    The spread of residuals should be approximately the same across the x-axis.
-  - Whether there are outliers.
-    This is indicated by some ‘extreme’ residuals that are far from the rest.
-- QQ Plot
-  - https://boostedml.com/2019/03/linear-regression-plots-how-to-read-a-qq-plot.html
-  - on the x-axis are the theoretical quantiles of a standard normal
-  - For the y-axis, consider the empirical distribution function of the
-    standardized residuals
+## Validation Plots
 
 ```{r}
 par(mfrow = c(2, 2))
@@ -96,34 +88,116 @@ plot(mdl)
 # qnorm((506 - 0.5) / 506) = 3.09
 ```
 
-```{r}
-plot(predict(mdl), residuals(mdl))
-plot(predict(mdl), rstudent(mdl))
-plot(hatvalues(mdl))
-# which.max(hatvalues(mdl))
+### Residule vs. Fitted
+
+- Whether linearity holds.
+  This is indicated by the mean residual value for every fitted value
+  region being close to 0.
+  In R this is indicated by the red line being close to the dashed line.
+- Whether homoskedasticity holds, i.e. the variance is the same.
+  The spread of residuals should be approximately the same across the
+  x-axis.
+- Whether there are outliers.
+  This is indicated by some ‘extreme’ residuals that are far from the
+  rest.
+
+```{r, fig.cap="Residual vs Prediction"}
+plot(fitted(mdl), residuals(mdl))
+lines(lowess(mdl %>% fitted(), mdl %>% residuals()),
+  col = "red"
+)
 ```
 
-## Multiple Linear Regression
+### QQ Plot
+
+- on the x-axis are the theoretical quantiles of a standard normal
+- For the y-axis, consider the empirical distribution function of the
+  standardized residuals
 
 ```{r}
-mdl2 <- lm(medv ~ lstat + age, data = MASS::Boston)
+x <- rexp(100)
+qqnorm(x, main = "Exponential QQ Plot")
+```
+
+### Scale vs. Location
+
+- diagnostic plot commonly used to assess the assumption of
+  homoscedasticity (i.e., equal variances)
+
+```{r, fig.cap="Scale-Location"}
+plot(fitted(mdl), mdl %>% residuals() %>% abs() %>% sqrt())
+lines(lowess(fitted(mdl), mdl %>% residuals() %>% abs() %>% sqrt()),
+  col = "red"
+)
+```
+
+- square root of the absolute values of the residuals (y-axis) against
+  the fitted values (x-axis).
+- assumptions of homoscedasticity
+  - met: the points in the plot should form a horizontal band with no
+    discernible pattern.
+  - otherwise: it suggests that the variance of the errors is not
+    constant across the range of the independent variable(s).
+    In this case, it may be necessary to consider a different model or
+    transformation of the dependent variable to improve the model fit.
+- Red line help visualize any patterns that may exist.
+  - If it deviates from a horizontal line, it suggests that there is a
+    problem with homoscedasticity.
+
+### Residuals vs. Leverage
+
+Also known as Cook's distance plot, is a diagnostic plot commonly used
+to assess the influence of each observation on the regression model
+
+```{r}
+plot(hatvalues(mdl), rstandard(mdl))
+lines(lowess(mdl %>% hatvalues, mdl %>% rstandard),
+  col = "red"
+)
+```
+
+- standardized residuals (y-axis, $e_i$) against the leverage (x-axis,
+  $h_i$).
+  - large $e_i$ (y-axis) means $y_i$ far from fitted value (possible
+    outlier)
+  - large $h_i$ (y-axis) means $x_i$ far from other $x$ values
+    (influential point)
+- influential observations
+  - standardized residuals greater than $2$ or $-2$ or
+  - leverage values greater than $\frac{2p}{n}$ (where $p$ is the number
+    of predictor variables and $n$ is the sample size)
+  - removal:
+    - re-examine the data
+    - consider a different model or transformation
+    - remove the influential observations from the analysis
+
+# Multiple Linear Regression
+
+```{r}
+mdl2 <- Boston %$% lm(medv ~ lstat + age)
 mdl2 %>% summary()
-mdl3 <- lm(medv ~ ., data = MASS::Boston)
+mdl3 <- lm(medv ~ ., data = Boston)
 mdl3 %>% summary()
-mdl4 <- lm(medv ~ . - age, data = MASS::Boston)
+mdl4 <- lm(medv ~ . - age, data = Boston)
 mdl4 %>% summary()
 ```
 
-## Non-linear Transformations of the Predictors
+# Non-linear Transformations of the Predictors
+
+**Reciprocal** as an example:
 
 ```{r}
-mdl5 <- lm(medv ~ lstat + I(1/lstat), data = MASS::Boston)
+mdl5 <- Boston %$% lm(medv ~ lstat + I(1 / lstat))
 mdl5 %>% summary()
-par(mfrow=c(2,2))
+par(mfrow = c(2, 2))
 plot(mdl5)
 ```
 
 ```{r}
-mdl6 <- lm(medv ~ I(1/lstat), data = MASS::Boston)
-mdl6 %>% summary
+mdl6 <- Boston %$% lm(medv ~ I(1 / lstat))
+mdl6 %>% summary()
 ```
+
+# Reference
+
+- https://boostedml.com/2019/03/linear-regression-plots-how-to-read-a-qq-plot.html
