@@ -1,0 +1,113 @@
+---
+title: "ISLR-R: Appendix A. Basic Stats"
+output: html_document
+date: "2023-03-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+import::from(magrittr, "%>%", "%$%", .into = "operators")
+```
+
+## Class vs. Typeof vs. Mode
+
+In R, `mode`, `class`, and `typeof` are functions used to determine the type of
+an object.
+However, they are not exactly the same thing and are used in different contexts.
+
+`mode` returns six basic modes:
+
+- "logical"
+- "numeric"
+- "integer"
+- "complex"
+- "character"
+- "raw"
+  
+It also includes "list" and "expression" as modes, which are not basic modes.
+`mode` can be used on any R object.
+
+`typeof` returns the type of object in a lower-level sense than mode.
+It returns one of seven types:
+
+- "logical"
+- "integer"
+- "double"
+- "complex"
+- "character"
+- "raw"
+- "list"
+
+`class` is based on R's object-oriented class hierarchy. 
+
+```{r}
+x <- 1:5
+mode(x)  # "numeric"
+class(x) # "integer"
+typeof(x) # "integer"
+
+y <- data.frame(a = 1:5, b = letters[1:5])
+mode(y) # "list"
+class(y) # "data.frame"
+typeof(y) # "list"
+```
+
+## Dataset and Models
+
+```{r}
+names(cars) # column names
+row.names(cars) # row names
+summary(cars)
+str(cars) # also summary
+head(cars) # equivalent to cars[1:6,]
+tail(cars)
+attributes(cars)
+# formula
+cars %$% class(dist ~ speed) # formula: lhs response; rhs predictor
+class(a ~ b)
+plot(dist ~ speed, cars)
+cars %$% plot(cars$speed, cars$dist)
+```
+
+## Statistics
+
+```{r}
+x <- round(runif(20, 0, 20), digits = 2)
+x
+summary(x)
+min(x)
+max(x)
+median(x)
+mean(x)
+
+var(x)
+sd(x)
+sqrt(var(x))
+rank(c(2, 4, 6, 0, 1, 4))
+rank(c(2, 4, 5, 0, 1, 4), ties.method = "last")
+order(x)
+order(x, decreasing = T)
+sort(x)
+x[order(x)]
+sort(x, decreasing = T)
+x[order(x, decreasing = T)]
+
+sum(x)
+length(x)
+round(x, 1)
+
+fivenum(x)
+quantile(x, c(0, 0.25, 0.5, 0.75, 1))
+quantile(x)
+```
+
+## TBD
+
+```{r}
+mad(x) # "median average distance":
+
+cummax(x) # cumulative maximum
+cummin(x) # cumulative minimum
+cumprod(x) # cumulative product
+cor(x, sin(x / 20)) # correlation coefficient
+```

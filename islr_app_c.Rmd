@@ -1,0 +1,131 @@
+---
+title: "ISLR-R: Appendix C. Exercises"
+output: html_document
+date: "2023-03-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Exercise (Lab 1)
+
+Prerequisites:
+
+```{r}
+import::from(magrittr, "%>%", "%$%", .into = "operators")
+import::from(tidyr, "replace_na")
+# load data
+auto <- read.csv("../data/Auto.csv", header = T, na.strings = "?")
+```
+
+## Data Imputation
+
+**Replace all missing values in each column with the mean value of that
+column.**
+
+```{r cars}
+df <- data.frame(
+  player = c("A", "B", NA, "D", "E"),
+  points = c(17, 13, NA, 9, 25),
+  rebounds = c(3, 4, NA, NA, 8),
+  blocks = c(1, 1, 2, 4, NA)
+)
+```
+
+Select numeric / non-numeric column:
+
+```{r}
+# numeric
+df %>%
+  dplyr::select(is.numeric %>% dplyr::where()) %>%
+  head()
+```
+
+```{r}
+# non-numeric
+df %>%
+  dplyr::select(!is.numeric %>% dplyr::where()) %>%
+  head()
+```
+
+Replace `NA` with mean (numeric) and empty string (non-numeric) values:
+
+```{r}
+df %>%
+  dplyr::mutate(dplyr::across(
+    is.numeric %>% dplyr::where(),
+    ~ replace_na(., mean(., na.rm = T))
+  )) %>%
+  dplyr::mutate(dplyr::across(
+    !is.numeric %>% dplyr::where(),
+    ~ replace_na(., "")
+  ))
+```
+
+## Query
+
+**Select cars with model years between 1970 and 1975 and engine displacement
+greater than or equal to 3, and calculate the average fuel efficiency.**
+
+```
+SELECT avg(mpg)
+  FROM auto
+ WHERE year > 1970 AND year <= 1975
+   AND displacement >= 3
+;
+```
+
+Filtering:
+
+```{r}
+auto %>%
+  dplyr::select("year", "displacement", "mpg") %>%
+  dplyr::filter(year %>% dplyr::between(., 70, 75) & displacement >= 3) %>%
+  head()
+```
+
+```{r}
+auto %>%
+  dplyr::select("year", "displacement", "mpg") %>%
+  dplyr::filter(year %>% dplyr::between(., 70, 75) & displacement >= 3) %>%
+  dplyr::summarise(avg_mpg = mean(mpg))
+```
+## Distribution
+
+Compute the distribution of car brands(names) and the mean weight.
+
+```
+SELECT name
+     , avg(weight) AS avg_weight
+  FROM auto
+ GROUP BY 1
+;
+```
+
+Multiple records with the same name:
+
+```{r}
+auto %>%
+  dplyr::filter(name == "chevrolet impala") %>%
+  head()
+```
+
+Summarize:
+
+```{r}
+auto %>%
+  dplyr::group_by(name) %>%
+  # only summarized columns are selected
+  dplyr::summarize("count" = dplyr::n(), weight = mean(weight)) %>%
+  head()
+```
+
+Show in descending order:
+
+```{r}
+auto %>%
+  dplyr::group_by(name) %>%
+  dplyr::summarize("count" = dplyr::n(), weight = mean(weight)) %>%
+  dplyr::arrange(dplyr::desc(weight))
+```

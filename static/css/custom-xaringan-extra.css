@@ -1,0 +1,168 @@
+/* Extra CSS */
+.title-slide {
+  text-align: left;
+}
+.title-slide h1 {
+  margin-bottom: 4em;
+}
+h1, h2, h3 {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+h4, h5, h6 {
+  margin-bottom: 0;
+}
+.pkg {
+  color: #53804d;
+  font-weight: 300;
+  font-size: 95%;
+  font-family: IBM Plex Mono;
+  padding: 1px 4px;
+  background-color: #eff4ef;
+  border-radius: 4px;
+  border: 1px solid #82c878;
+}
+.muted {
+  color: #777;
+}
+.hl {
+  background-color: rgba(255, 255, 0, 0.5);
+  padding: 1px 4px;
+}
+.footer {
+  position: absolute;
+  bottom: 3%;
+  left: 5%;
+  opacity: 75%;
+}
+.bordered {
+  border: #777 solid 2px;
+}
+.top {
+  vertical-align: top;
+}
+blockquote {
+  font-family: IBM Plex Serif;
+  font-weight: 400;
+  font-style: normal;
+  color: #777;
+}
+.smaller {
+  font-size: 0.5rem;
+}
+.small {
+  font-size: 0.75rem;
+}
+.big {
+  font-size: 1.25rem;
+}
+.bigger {
+  font-size: 1.75rem;
+}
+.huge {
+  font-size: 2.25em;
+}
+.crazy-big {
+  font-size: 3em;
+}
+.third {
+  width: 33%;
+}
+.two-third {
+  width: 66%;
+}
+.right-column img {
+  max-height: 35vh;
+  margin-top: -2em;
+}
+::-mox-selection {
+  background-color: rgba(255, 255, 0, 0.5);
+}
+::selection {
+  background-color: rgba(255, 255, 0, 0.5);
+}
+kbd {
+  padding: 0.1em 0.6em;
+  border: 1px solid #ccc;
+  font-family: Arial,Helvetica,sans-serif;
+  font-family: 'IBM Plex Mono',monospace;
+  background-color: #f7f7f7;
+  color: #333;
+  -moz-box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
+  -webkit-box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
+  box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2),0 0 0 2px #ffffff inset;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  border-radius: 3px;
+  display: inline-block;
+  margin: 0 0.1em;
+  text-shadow: 0 1px 0 #fff;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.pkg {
+  color: var(--green);
+  font-weight: 300;
+  font-size: 0.95rem;
+  font-family: var(--code-font-family);
+  padding: 1px 4px;
+  background-color: #EFF4EF;
+  border-radius: 4px;
+  border: 1px solid #82c878;
+}
+.hide-count .remark-slide-number {
+  display: none;
+}
+
+.talk-meta {
+  font-family: var(--header-font-family);
+  position: absolute;
+  text-align: left;
+  bottom: 20px;
+  left: 64px;
+}
+.talk-title h1 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+.talk-meta p {
+  margin-top: 0;
+  margin-bottom: 40px;
+}
+.talk-author {
+  color: #444;
+  font-weight: bold;
+  font-size: 1.5em;
+  line-height: 1em;
+}
+.talk-date {
+  font-size: 1.25em;
+  line-height: 0;
+}
+
+/* Slide Color Bar */
+.slide-border::after,
+.remark-slide-content:not(.no-border):not(.inverse):not(.title)::after {
+  content: '';
+  width: 100%;
+  height: 12px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background: rgb(6,47,110);
+  background: linear-gradient(90deg, rgba(6,47,110,1) 0%, rgba(6,47,110,1) 40%, rgba(57,192,224,1) 40%, rgba(57,192,224,1) 55%, rgba(160,217,230,1) 55%, rgba(160,217,230,1) 70%, rgba(255,255,255,1) 70%, rgba(255,255,255,1) 85%, rgba(116,188,31,1) 85%, rgba(116,188,31,1) 100%);
+}
+
+/* Slide Logo */
+.slide-logo::before,
+.remark-slide-content:not(.no-logo):not(.inverse):not(.title)::before {
+  content: '';
+  width: 40px;
+  height: 40px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-image: url("../images/r_logo.png");
+}
