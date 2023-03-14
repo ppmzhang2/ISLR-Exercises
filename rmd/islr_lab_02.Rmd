@@ -201,7 +201,7 @@ mdl4 %>% summary()
 **Reciprocal** as an example:
 
 ```{r}
-mdl5 <- Boston %$% lm(medv ~ lstat + I(1 / lstat))
+mdl5 <- Boston %$% lm(medv ~ I(1 / lstat))
 mdl5 %>% summary()
 par(mfrow = c(2, 2))
 plot(mdl5)

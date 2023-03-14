@@ -14,4 +14,5 @@ Imports:
     xaringan,
     rmarkdown,
     dplyr,
+    tidyr,
     ggplot2
