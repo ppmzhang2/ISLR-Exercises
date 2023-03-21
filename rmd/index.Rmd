@@ -11,7 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Table of Contents
 
 - [Lab 2: Linear Model](./islr_lab_02.html)
+- [Revision 1](./islr_lab_review_01.html)
 - [Appendix A: Basic Stats](./islr_app_a.html)
 - [Appendix B: Rmarkdown Slides](./islr_app_b.html)
 - [Appendix C: Exercises](./islr_app_c.html)
 - [Appendix D: Introduce ggplot2](./islr_app_d.html)
+- [Appendix E: KNN](./islr_app_e.html)
