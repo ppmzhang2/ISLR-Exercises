@@ -1,6 +1,8 @@
 ---
 title: "ISLR-R: Appendix D. Introduce ggplot2"
-output: html_document
+output:
+  - pdf_document
+  - html_document
 date: "2023-03-09"
 ---
 

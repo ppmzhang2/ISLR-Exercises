@@ -1,0 +1,88 @@
+---
+title: "ISLR-R: Appendix E. KNN"
+output: html_document
+date: "2023-03-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+import::from(MASS, Boston)
+import::from(magrittr, "%>%", "%$%", .into = "operators")
+```
+
+## KNN Code
+
+KNN R code:
+
+```{r cars}
+kNN <- function(k, x.train, y.train, x.pred) {
+  #
+  ## This is kNN regression function for problems with
+  ## 1 predictor
+  #
+  ## INPUTS
+  #
+  # k       = number of observations in nieghbourhood
+  # x.train = vector of training predictor values
+  # y.train = vector of training response values
+  # x.pred  = vector of predictor inputs with unknown
+  #           response values
+  #
+  ## OUTPUT
+  #
+  # y.pred  = predicted response values for x.pred
+
+  ## Initialize:
+  n.pred <- length(x.pred)
+  y.pred <- numeric(n.pred)
+
+  ## Main Loop
+  for (i in 1:n.pred) {
+    d <- abs(x.train - x.pred[i])
+    dstar <- d[order(d)[k]]
+    y.pred[i] <- mean(y.train[d <= dstar])
+  }
+  ## Return the vector of predictions
+  invisible(y.pred)
+}
+```
+
+## Example
+
+Split training and testing dataset:
+
+```{r split}
+N_REC <- dim(Boston)[1]
+RATIO_TEST <- 0.1
+N_TEST <- round(RATIO_TEST * N_REC, 0) # 98
+
+indices_shuffled <- sample(seq(1, N_REC), replace = FALSE)
+test_indices <- indices_shuffled[1:N_TEST] # test with firt 98
+train_indices <- indices_shuffled[(N_TEST + 1):N_REC] # rest for training
+df_test <- Boston[test_indices, ]
+df_train <- Boston[train_indices, ]
+
+x_train <- df_train$lstat
+y_train <- df_train$medv
+x_test <- df_test$lstat
+y_test <- df_test$medv
+```
+
+Evaluate MSE:
+
+```{r}
+msr_train <- (kNN(20, x_train, y_train, x_train) - y_train)^2 %>% mean
+msr_test <- (kNN(20, x_train, y_train, x_test) - y_test)^2 %>% mean
+sprintf("The training MSE is %s", msr_train)
+sprintf("The test MSE is %s", msr_test)
+```
+
+Plotting:
+
+```{r}
+x_seq <- seq(0, 40, 0.5)
+plot(0:50, 0:50, type = "n") 
+points(x_test, y_test, col = "red", pch = 0)
+points(x_train, y_train, col = "blue", pch = 1)
+points(x_seq, kNN(10, x_train, y_train, x_seq), col = "green", pch = 2)
+```
