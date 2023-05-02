@@ -1,0 +1,299 @@
+---
+title: "ISLR-R: 5. Decision Tree"
+output:
+  prettydoc::html_pretty:
+    toc: true
+    theme: cayman
+    highlight: github
+    df_print: default
+date: "2023-05-02"
+editor_options:
+  markdown:
+    wrap: 79
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+import::from(magrittr, "%>%", "%$%", .into = "operators")
+```
+
+In this lab you will work through Section 8.3.
+The rpart() R function is also included as an alternative to tree().
+
+Load Dataset:
+
+```{r}
+import::from(MASS, Boston)
+import::from(ISLR, Carseats)
+```
+
+## Fitting Classification Trees
+
+Turn into a classification problem (two class: High and Low)
+
+```{r}
+High <- Carseats %$% as.factor(ifelse(Sales <= 8, "No", "Yes"))
+Carseats1 <- data.frame(Carseats, High)
+Carseats1 %>% head()
+```
+
+Build a classification tree
+
+```{r}
+tree.carseats <- tree::tree(High ~ . - Sales, Carseats1)
+summary(tree.carseats)
+plot(tree.carseats)
+text(tree.carseats, pretty = 0)
+tree.carseats
+```
+
+Estimate the accuracy of the tree
+
+```{r}
+set.seed(1)
+train <- sample(1:nrow(Carseats1), 200)
+Carseats.test <- Carseats1[-train, ]
+High.test <- High[-train]
+tree.carseats <- tree::tree(High ~ . - Sales, Carseats1, subset = train)
+tree.pred <- predict(tree.carseats, Carseats.test, type = "class")
+confusion.matrix <- table(tree.pred, High.test)
+confusion.matrix
+# There are some options for how accuracy is calculated
+# 1. From the confusion table, sum the True Positive and True Negative classifications, then divide by the total number of observations.
+accuracy.TNplusTP <- (84 + 44) / 200
+cat(
+  "Accuracy calculated from TP and TN metrics:",
+  accuracy.TNplusTP, "\n"
+)
+# 2. Calculate from the diagonal of the confusion matrix. This is equivalent to option 1, but uses the matrix rather than the hard-coded result.
+accuracy.fromCM <- sum(diag(confusion.matrix)) / sum(confusion.matrix)
+cat(
+  "Accuracy calculated from diagonal of Confusion Matrix:",
+  accuracy.fromCM, "\n"
+)
+# 3. Calculate directly from the test observations and predictions
+accuracy.fromTestResults <- round(mean(tree.pred == High.test), 2)
+cat("Accuracy from test results:", accuracy.fromTestResults, "\n")
+```
+
+Use cross validation to choose tree complexity
+
+```{r}
+set.seed(3)
+cv.carseats <- tree::cv.tree(tree.carseats, FUN = prune.misclass)
+cv.carseats
+plot(cv.carseats$size, cv.carseats$dev, type = "b")
+```
+
+Prune the tree with 6 terminal nodes
+
+```{r}
+prune.carseats <- tree::prune.tree(tree.carseats,
+  best = 6,
+  method = "misclass"
+)
+plot(prune.carseats)
+text(prune.carseats, pretty = 0)
+tree.pred <- predict(prune.carseats, Carseats.test, type = "class")
+table(tree.pred, High.test)
+(86 + 49) / 200
+```
+
+Prune the tree with 5 terminal nodes
+
+```{r}
+prune.carseats <- tree::prune.tree(tree.carseats,
+  best = 5,
+  method = "misclass"
+)
+plot(prune.carseats)
+text(prune.carseats, pretty = 0)
+tree.pred <- predict(prune.carseats, Carseats.test, type = "class")
+table(tree.pred, High.test)
+test.accuracy <- (86 + 49) / 200
+test.accuracy
+summary(prune.carseats)
+# It is unclear where the misclassification error rate given in the summary is
+# derived from.
+# The documentation suggests this is a training error.
+# The TEST error can be calculated in 2 ways:
+# 1. Sum of the False Postive + False Negative, divided by the total number of
+#    observations
+test.misclass.error <- (32 + 33) / 200
+cat(
+  "\nMisclassifications calculated from False Positive and False Negative Metrics:",
+  test.misclass.error, "\n"
+)
+# 2. 1-accuracy
+test.misclass.fromAccuracy <- 1 - test.accuracy
+cat(
+  "Misclassifications calculated as 1-accuracy:",
+  test.misclass.fromAccuracy, "\n"
+)
+```
+
+Using CART to solve this problem
+
+```{r}
+fit <- rpart::rpart(High ~ . - Sales,
+  method = "class", data = Carseats1[train, ]
+)
+# control <- rpart::rpart.control(minsplit = 2, cp = 0)
+summary(fit)
+plot(fit)
+text(fit, pretty = 0)
+```
+
+## Fitting Regression Trees
+
+```{r}
+set.seed(1)
+train <- sample(1:nrow(Boston), nrow(Boston) / 2)
+```
+
+Grow the regression tree
+
+```{r}
+tree.boston <- tree::tree(medv ~ ., Boston, subset = train)
+summary(tree.boston)
+plot(tree.boston)
+text(tree.boston, pretty = 0)
+```
+
+Use cross validation to choose tree complexity
+
+```{r}
+cv.boston <- tree::cv.tree(tree.boston)
+plot(cv.boston$size, cv.boston$dev, type = "b")
+cv.boston
+```
+
+Prune the tree
+
+```{r}
+prune.boston <- tree::prune.tree(tree.boston, best = 5)
+plot(prune.boston)
+text(prune.boston, pretty = 0)
+```
+
+Estimate the error of the tree
+
+```{r}
+yhat <- predict(tree.boston, newdata = Boston[-train, ])
+boston.test <- Boston[-train, "medv"]
+mean((yhat - boston.test)^2)
+
+yhat <- predict(prune.boston, newdata = Boston[-train, ])
+boston.test <- Boston[-train, "medv"]
+mean((yhat - boston.test)^2)
+```
+
+## Bagging
+
+```{r}
+set.seed(1)
+train <- sample(1:nrow(Boston), nrow(Boston) / 2)
+n_var <- dim(Boston)[2] - 1
+n_var
+```
+
+Generate bagged trees
+
+```{r}
+bag.boston <- randomForest::randomForest(medv ~ .,
+  data = Boston, subset = train, mtry = n_var, ntree = 500, importance = TRUE
+)
+bag.boston
+yhat.bag <- predict(bag.boston, newdata = Boston[-train, ])
+boston.test <- Boston[-train, "medv"]
+plot(yhat.bag, boston.test)
+abline(0, 1)
+mean((yhat.bag - boston.test)^2)
+```
+
+Try increasing the number of trees
+
+```{r}
+bag.boston <- randomForest::randomForest(medv ~ .,
+  data = Boston, subset = train, mtry = n_var, ntree = 1000
+)
+yhat.bag <- predict(bag.boston, newdata = Boston[-train, ])
+bag.boston
+mean((yhat.bag - boston.test)^2)
+```
+
+## Random Forest
+
+- Bootstrapping training data (same with bagging)
+- Column sub-sampling
+  - the essence of the RF
+  - without it, bagging a good deal of homogeneous models may not reduce the
+    variance
+
+```{r}
+set.seed(1)
+rf.boston <- randomForest::randomForest(medv ~ .,
+  data = Boston, subset = train, mtry = n_var / 3, ntree = 500,
+  importance = TRUE
+)
+rf.boston
+yhat.rf <- predict(rf.boston, newdata = Boston[-train, ])
+mean((yhat.rf - boston.test)^2)
+```
+
+Feature importance:
+
+- Gini impurity reduction: the Gini impurity is reduced each time a feature
+  is used to split the data in a tree.
+  The importance is estimated by averaging for each variable the reduction
+- permutation importance: by randomly permute values of a variable, and the
+  model performance will decrease if a variable is important.
+  The performance is evaluated both **before** and **after** permuting the
+  feature values (e.g. for the OOB samples), and the MSE difference is averaged
+  to evaluate the importance.
+
+```{r}
+randomForest::importance(rf.boston)
+randomForest::varImpPlot(rf.boston)
+```
+
+## Boosting
+
+```{r}
+set.seed(1)
+boost.boston <- gbm::gbm(medv ~ .,
+  data = Boston[train, ],
+  distribution = "gaussian", n.trees = 5000, interaction.depth = 4
+)
+summary(boost.boston)
+yhat.boost <- predict(boost.boston,
+  newdata = Boston[-train, ],
+  n.trees = 5000
+)
+mean((yhat.boost - boston.test)^2)
+```
+
+change the shrinkage factor and tree depth
+
+```{r}
+B <- 10000
+lambda <- 0.02
+d <- 2
+boost.boston <- gbm::gbm(medv ~ .,
+  data = Boston[train, ],
+  distribution = "gaussian",
+  n.trees = B, interaction.depth = d, shrinkage = lambda
+)
+boost.boston
+yhat.boost <- predict(boost.boston,
+  newdata = Boston[-train, ], n.trees = B
+)
+mean((yhat.boost - boston.test)^2)
+```
+
+### Grid Search
+
+1. Create a grid: i.e. create a hyper-parameter space
+2. Split dataset: either training-validation or CV
+3. Train and evaluate models
+4. Compare performance

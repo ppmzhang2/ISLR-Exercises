@@ -1,7 +1,10 @@
 ---
 title: "ISLR-R: 4. Cross-Validation and the Bootstrap"
 output:
-  html_document:
+  prettydoc::html_pretty:
+    toc: true
+    theme: cayman
+    highlight: github
     df_print: paged
 date: "2023-04-25"
 editor_options:
@@ -96,24 +99,86 @@ cv.error.10
 plot(1:10, cv.error.10, type = "b", col = "red")
 ```
 
-### Model Selection (Formally)
+### One SE Rule
+
+Prepare dataset:
 
 ```{r}
-import::from(magrittr, "%>%", "%$%", .into = "operators")
-# import dataset
-import::from(ISLR, Auto)
-
-get_indices <- function(ratio, n_rec) {
-  n_sample <- round(ratio * n_rec, 0)
-  return(sample(n_rec, n_sample))
-}
-
 data <- Auto %>%
   dplyr::select("mpg", "horsepower") %>%
   dplyr::mutate(const = 1) %>%
   dplyr::mutate(horsepower2 = horsepower^2) %>%
   dplyr::mutate(horsepower3 = horsepower^3) %>%
-  dplyr::mutate(horsepower4 = horsepower^4)
+  dplyr::mutate(horsepower4 = horsepower^4) %>%
+  dplyr::mutate(horsepower5 = horsepower^5) %>%
+  dplyr::mutate(horsepower6 = horsepower^6) %>%
+  dplyr::mutate(horsepower7 = horsepower^7) %>%
+  dplyr::mutate(horsepower8 = horsepower^8)
+```
+
+models
+
+```{r}
+control <- caret::trainControl(
+  method = "cv",
+  number = 10, savePredictions = "final"
+)
+get_model <- function(formula) {
+  caret::train(formula,
+    data = data, method = "lm", trControl = control
+  )
+}
+mdl_00 <- get_model(mpg ~ const + 0)
+mdl_01 <- get_model(mpg ~ horsepower + const + 0)
+mdl_02 <- get_model(mpg ~ horsepower2 + horsepower + const + 0)
+mdl_03 <- get_model(mpg ~ horsepower3 + horsepower2 + horsepower + const + 0)
+mdl_04 <- get_model(
+  mpg ~ horsepower4 + horsepower3 + horsepower2 + horsepower + const + 0
+)
+mdl_05 <- get_model(
+  mpg ~ horsepower5 + horsepower4 + horsepower3 + horsepower2 + horsepower + const + 0
+)
+mdl_06 <- get_model(
+  mpg ~ horsepower6 + horsepower5 + horsepower4 + horsepower3 + horsepower2 + horsepower + const + 0
+)
+mdl_07 <- get_model(
+  mpg ~ horsepower7 + horsepower6 + horsepower5 + horsepower4 + horsepower3 + horsepower2 + horsepower + const + 0
+)
+mdl_08 <- get_model(
+  mpg ~ horsepower8 + horsepower7 + horsepower6 + horsepower5 + horsepower4 + horsepower3 + horsepower2 + horsepower + const + 0
+)
+# Calculate the residuals for each fold
+res_00 <- mdl_00$pred$obs - mdl_00$pred$pred
+res_01 <- mdl_01$pred$obs - mdl_01$pred$pred
+res_02 <- mdl_02$pred$obs - mdl_02$pred$pred
+res_03 <- mdl_03$pred$obs - mdl_03$pred$pred
+res_04 <- mdl_04$pred$obs - mdl_04$pred$pred
+res_05 <- mdl_05$pred$obs - mdl_05$pred$pred
+res_06 <- mdl_06$pred$obs - mdl_06$pred$pred
+res_07 <- mdl_07$pred$obs - mdl_07$pred$pred
+res_08 <- mdl_08$pred$obs - mdl_08$pred$pred
+# Calculate the MSE for each fold
+mse_00 <- tapply(res_00^2, mdl_00$pred$Resample, mean)
+mse_01 <- tapply(res_01^2, mdl_01$pred$Resample, mean)
+mse_02 <- tapply(res_02^2, mdl_02$pred$Resample, mean)
+mse_03 <- tapply(res_03^2, mdl_03$pred$Resample, mean)
+mse_04 <- tapply(res_04^2, mdl_04$pred$Resample, mean)
+mse_05 <- tapply(res_05^2, mdl_05$pred$Resample, mean)
+mse_06 <- tapply(res_06^2, mdl_06$pred$Resample, mean)
+mse_07 <- tapply(res_07^2, mdl_07$pred$Resample, mean)
+mse_08 <- tapply(res_08^2, mdl_08$pred$Resample, mean)
+
+ds_mse <- data.frame(mse_00, mse_01, mse_02, mse_03, mse_04, mse_05, mse_06, mse_07, mse_08)
+boxplot(ds_mse)
+```
+
+### Yet Another Model Selection (L2-MSE)
+
+```{r}
+get_indices <- function(ratio, n_rec) {
+  n_sample <- round(ratio * n_rec, 0)
+  return(sample(n_rec, n_sample))
+}
 
 N_REC <- data %>% nrow()
 
