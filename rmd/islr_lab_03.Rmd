@@ -1,0 +1,385 @@
+---
+title: "ISLR-R: 3. Logistic Regression, LDA, QDA and KNN"
+output: html_document
+date: "2023-03-28"
+editor_options:
+  markdown:
+    wrap: 79
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+import::from(magrittr, "%>%", "%$%", .into = "operators")
+```
+
+In this lab you will work through Section 4.6.
+
+## Stock Market Dataset
+
+The `Smarket` dataset is part of the `ISLR` package in R.
+This dataset contains daily percentage returns for the S&P 500 stock market
+index between 2001 and 2005.
+The main goal of analyzing this dataset is to understand and predict the
+direction of the stock market based on previous data.
+
+It contains $1250$ observations and $9$ variables:
+
+-   `Year`: The year when the observation was recorded, ranging from
+    $2001$ to $2005$.
+-   `Lag1`: The percentage return of the S&P 500 index for the previous
+    trading day (lagged by one day).
+-   `Lag2`: The percentage return of the S&P 500 index for two trading
+    days prior (lagged by two days).
+-   `Lag3`: The percentage return of the S&P 500 index for three trading
+    days prior (lagged by three days).
+-   `Lag4`: The percentage return of the S&P 500 index for four trading
+    days prior (lagged by four days).
+-   `Lag5`: The percentage return of the S&P 500 index for five trading
+    days prior (lagged by five days).
+-   `Volume`: The average daily trading volume (in billions of shares)
+    for the S&P 500 index during the specific trading day. Trading
+    volume is an indicator of market activity, as it represents the
+    number of shares that change hands during a given period. High
+    trading volume can be a sign of increased interest in the market or
+    in a particular stock, while low trading volume may indicate less
+    interest or activity.
+-   `Today`: The percentage return of the S&P 500 index for the current
+    trading day.
+-   `Direction`: A categorical variable indicating whether the market
+    had a positive return (`Up`) or a negative return (`Down`) on the
+    current trading day. This variable is derived from the Today column
+    and serves as the target variable for prediction models.
+
+```{r}
+import::from(ISLR, Smarket)
+```
+
+```{r}
+Smarket %>% summary()
+Smarket %>% head()
+```
+
+Plots
+
+```{r}
+pairs(Smarket)
+# cor(Smarket) # not all numeric
+cor(Smarket %>% dplyr::select(is.numeric %>% dplyr::where()))
+```
+
+```{r}
+Smarket %$% plot(Volume)
+```
+
+## Dataset Holdout
+
+```{r}
+filter_train <- (Smarket$Year < 2005)
+ds_test <- Smarket[!filter_train, ]
+dim(ds_test)
+```
+
+```{r}
+Direction <- Smarket$Direction
+y_test <- Direction[!filter_train]
+```
+
+## Logistic Regression
+
+### All Lags
+
+Modelling:
+
+```{r}
+mdl_lr <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume,
+  data = Smarket, family = binomial, subset = filter_train
+)
+```
+
+#### Prediction
+
+```{r}
+predict(mdl_lr,
+  newdata = data.frame(
+    Lag1 = c(1.2, 1.5), Lag2 = c(1.1, -0.8), Lag3 = c(2.3, 3.4),
+    Lag4 = c(1.2, 1.5), Lag5 = c(1.1, -0.8), Volume = c(1.2, 1.6)
+  ),
+  type = "response"
+)
+```
+
+Predict with old data is also possible:
+
+```{r}
+prob_lr <- predict(mdl_lr, type = "response")
+prob_lr %>% length()
+prob_lr[1:10]
+```
+
+#### Goodness of Fit
+
+```{r}
+mdl_lr %>% summary()
+```
+
+-   Akaike Information Criterion (AIC): a model selection criterion that
+    balances the goodness-of-fit with the complexity of the model. It
+    takes into account both the residual deviance and the number of
+    parameters in the model. Lower AIC values indicate better models,
+    and it is used to compare multiple models with different numbers of
+    predictors. The formula for AIC is:
+
+$$AIC = -2 \ln L_{model} + 2 K$$ where $K$ is the number of parameters
+(including interception).
+
+-   Residual Deviance:
+
+$$D = -2 \ln L_{model} + 2 \ln L^*$$ - Null Deviance:
+
+$$D_{null} = -2 \ln L_{null} + 2 \ln L^*$$
+
+where $L^*$ is the likelihood of a saturated model.
+
+P.S.
+
+-   Saturated Model: a model that has as many parameters as there are
+    data points, meaning that it perfectly fits the data. i.e. $y = y_i$
+
+-   Model
+
+    -   Proposed Model: `p` parameters plus an intercept term
+    -   Null Model: only interception
+
+Output probabilities of the form $P (Y = 1|X)$:
+
+Confusion Matrix
+
+```{r}
+prob_lr <- predict(mdl_lr, ds_test, type = "response")
+prd_lr <- rep("Down", 252)
+prd_lr[prob_lr > .5] <- "Up"
+table(prd_lr, y_test)
+```
+
+Accuracy:
+
+```{r}
+mean(prd_lr == y_test)
+```
+
+Error Rate:
+
+```{r}
+mean(prd_lr != y_test)
+```
+
+### Lag1 + Lag2
+
+```{r}
+mdl_lr <- glm(Direction ~ Lag1 + Lag2,
+  data = Smarket,
+  family = binomial, subset = filter_train
+)
+mdl_lr %>% summary()
+```
+
+Confusion Matrix
+
+```{r}
+prob_lr <- predict(mdl_lr, ds_test, type = "response")
+prd_lr <- rep("Down", 252)
+prd_lr[prob_lr > .5] <- "Up"
+table(prd_lr, y_test)
+```
+
+Accuracy:
+
+```{r}
+mean(prd_lr == y_test)
+```
+
+Error Rate:
+
+```{r}
+mean(prd_lr != y_test)
+```
+
+## K-Nearest Neighbors
+
+```{r}
+Lag1 <- Smarket$Lag1
+Lag2 <- Smarket$Lag2
+
+set.seed(1)
+x_train <- cbind(Lag1, Lag2)[filter_train, ]
+x_test <- cbind(Lag1, Lag2)[!filter_train, ]
+y_train <- Direction[filter_train]
+prd_knn <- class::knn(x_train, x_test, y_train, k = 1)
+table(prd_knn, y_test)
+(83 + 43) / 252
+prd_knn <- class::knn(x_train, x_test, y_train, k = 3)
+table(prd_knn, y_test)
+mean(prd_knn == y_test)
+```
+
+## Evaluation Metrics
+
+-   Precision: $\frac{TP}{TP + FP}$. It measures the ability of the
+    classifier to correctly identify only the relevant instances.
+-   Recall (Sensitivity): $\frac{TP}{TP + FN}$. It measures the ability
+    of the classifier to find all the relevant instances.
+-   F1-Score: The harmonic mean of precision and recall. It provides a
+    balanced measure of both precision and recall, especially when there
+    is an uneven class distribution.
+-   Specificity: $\frac{TN}{TN + FP}$. It measures the ability of the
+    classifier to correctly identify negative instances.
+
+LR:
+
+```{r}
+confusion_matrix <- table(prd_lr, y_test)
+
+TP <- confusion_matrix["Up", "Up"]
+FP <- confusion_matrix["Up", "Down"]
+FN <- confusion_matrix["Down", "Up"]
+TN <- confusion_matrix["Down", "Down"]
+
+acc <- (TP + TN) / (TP + TN + FP + FN)
+precision <- TP / (TP + FP)
+recall <- TP / (TP + FN)
+f1_score <- 2 * (precision * recall) / (precision + recall)
+
+cat(
+  "Accuracy:", acc, "\n", "Precision:", precision, "\n", "Recall:", recall, "\n",
+  "F1-Score:", f1_score, "\n"
+)
+```
+
+KNN:
+
+```{r}
+confusion_matrix <- table(prd_knn, y_test)
+
+TP <- confusion_matrix["Up", "Up"]
+FP <- confusion_matrix["Up", "Down"]
+FN <- confusion_matrix["Down", "Up"]
+TN <- confusion_matrix["Down", "Down"]
+
+acc <- (TP + TN) / (TP + TN + FP + FN)
+precision <- TP / (TP + FP)
+recall <- TP / (TP + FN)
+f1_score <- 2 * (precision * recall) / (precision + recall)
+
+cat(
+  "Accuracy:", acc, "\n", "Precision:", precision, "\n", "Recall:", recall, "\n",
+  "F1-Score:", f1_score, "\n"
+)
+```
+
+RoC:
+
+```{r}
+y_test_int <- as.integer(y_test == "Up")
+roc_obj <- pROC::roc(y_test_int, prob_lr)
+# Plot ROC curve
+plot(roc_obj,
+  main = "ROC Curve",
+  xlab = "Specificity (1 - FPR)",
+  ylab = "Sensitivity (Recall)"
+)
+```
+
+## Linear Discriminant Analysis
+
+```{r}
+mdl_lda <- MASS::lda(Direction ~ Lag1 + Lag2,
+  data = Smarket,
+  subset = filter_train
+)
+mdl_lda
+```
+
+Plotting
+
+```{r}
+plot(mdl_lda)
+prd_lda <- predict(mdl_lda, ds_test)
+names(prd_lda)
+table(prd_lda$class, y_test)
+mean(prd_lda$class == y_test)
+sum(prd_lda$posterior[, 1] >= .5)
+sum(prd_lda$posterior[, 1] < .5)
+prd_lda$posterior[1:20, 1]
+prd_lda$class[1:20]
+sum(prd_lda$posterior[, 1] > .9)
+```
+
+```{r}
+mdl_lda %>% summary()
+```
+
+## Quadratic Discriminant Analysis
+
+```{r}
+mdl_qda <- MASS::qda(Direction ~ Lag1 + Lag2,
+  data = Smarket, subset = filter_train
+)
+mdl_qda
+prd_qda <- predict(mdl_qda, ds_test)
+table(prd_qda$class, y_test)
+mean(prd_qda$class == y_test)
+```
+
+## An Application to Caravan Insurance Data
+
+```{r}
+import::from(ISLR, Caravan)
+```
+
+```{r}
+dim(Caravan)
+attach(Caravan)
+summary(Purchase)
+348 / 5822
+standardized.X <- scale(Caravan[, -86])
+var(Caravan[, 1])
+var(Caravan[, 2])
+var(standardized.X[, 1])
+var(standardized.X[, 2])
+test <- 1:1000
+x_train <- standardized.X[-test, ]
+x_test <- standardized.X[test, ]
+train.Y <- Purchase[-test]
+test.Y <- Purchase[test]
+set.seed(1)
+prd_knn <- class::knn(x_train, x_test, train.Y, k = 1)
+mean(test.Y != prd_knn)
+mean(test.Y != "No")
+table(prd_knn, test.Y)
+9 / (68 + 9)
+prd_knn <- class::knn(x_train, x_test, train.Y, k = 3)
+table(prd_knn, test.Y)
+5 / 26
+prd_knn <- class::knn(x_train, x_test, train.Y, k = 5)
+table(prd_knn, test.Y)
+4 / 15
+mdl_lr <- glm(Purchase ~ .,
+  data = Caravan,
+  family = binomial, subset = -test
+)
+prob_lr <- predict(mdl_lr, Caravan[test, ], type = "response")
+prd_lr <- rep("No", 1000)
+prd_lr[prob_lr > .5] <- "Yes"
+table(prd_lr, test.Y)
+prd_lr <- rep("No", 1000)
+prd_lr[prob_lr > .25] <- "Yes"
+table(prd_lr, test.Y)
+11 / (22 + 11)
+```
+
+```{r}
+library(MASS)
+data(iris)
+lda_model <- lda(Species ~ ., data = iris)
+plot(lda_model)
+```
