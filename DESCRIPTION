@@ -15,4 +15,6 @@ Imports:
     rmarkdown,
     dplyr,
     tidyr,
-    ggplot2
+    ggplot2,
+    pROC,
+    ISLR

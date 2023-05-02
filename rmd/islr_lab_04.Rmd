@@ -4,6 +4,9 @@ output:
   html_document:
     df_print: paged
 date: "2023-04-25"
+editor_options:
+  markdown:
+    wrap: 79
 ---
 
 ```{r setup, include=FALSE}

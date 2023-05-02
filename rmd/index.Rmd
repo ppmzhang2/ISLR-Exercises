@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Table of Contents
 
 - [Lab 2: Linear Model](./islr_lab_02.html)
+- [Lab 3: Logistic Regression, LDA, QDA and KNN](./islr_lab_03.html)
+- [Lab 4: Cross-Validation and the Bootstrap](./islr_lab_04.html)
 - [Revision 1](./islr_lab_review_01.html)
 - [Appendix A: Basic Stats](./islr_app_a.html)
 - [Appendix B: Rmarkdown Slides](./islr_app_b.html)

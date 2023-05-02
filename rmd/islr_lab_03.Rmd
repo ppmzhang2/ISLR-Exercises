@@ -1,6 +1,8 @@
 ---
 title: "ISLR-R: 3. Logistic Regression, LDA, QDA and KNN"
-output: html_document
+output:
+  html_document:
+    df_print: paged
 date: "2023-03-28"
 editor_options:
   markdown:
