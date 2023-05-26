@@ -1,5 +1,5 @@
 ---
-title: "ISLR-R: 7. Cluster Analysis"
+title: "ISLR-R: 7. Clustering Analysis"
 output:
   prettydoc::html_pretty:
     toc: true

@@ -24,4 +24,5 @@ Imports:
     tree,
     rpart,
     randomForest,
+    gbm,
     ISLR
