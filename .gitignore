@@ -16,3 +16,6 @@
 .ipynb_checkpoints/
 
 header-attrs.js
+
+# rmd folder
+*_files/
