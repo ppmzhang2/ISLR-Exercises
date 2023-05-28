@@ -25,4 +25,5 @@ Imports:
     rpart,
     randomForest,
     gbm,
+    e1071,
     ISLR
