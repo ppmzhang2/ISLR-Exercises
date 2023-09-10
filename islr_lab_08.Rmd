@@ -1,0 +1,321 @@
+---
+title: "ISLR-R: 8. Support Vector Machine"
+output:
+  prettydoc::html_pretty:
+    toc: true
+    theme: cayman
+    highlight: github
+    df_print: paged
+date: "2023-05-31"
+editor_options:
+  markdown:
+    wrap: 79
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+import::from(magrittr, "%>%", "%$%", .into = "operators")
+library(ggplot2)
+```
+
+## Functions
+
+Plot dataset:
+
+```{r}
+plot_data <- function(data, title = "", subtitle = "") {
+  p <- data %>%
+    ggplot(data = ., mapping = aes(x = x1, y = x2)) +
+    scale_color_manual(values = c(
+      "#00AFBB", "#FC4E07", "#E7B800", "#006400", "#9400D3", "#FF8C00"
+    )) +
+    geom_point(
+      mapping = aes(color = label %>% factor()),
+      size = 3.0, alpha = 0.4
+    ) +
+    labs(
+      title = title,
+      subtitle = subtitle,
+      x = "X1", y = "X2", color = "Ground Truth"
+    ) +
+    theme_grey()
+  return(p)
+}
+```
+
+Plot classification:
+
+```{r}
+plot_cls <- function(data, pred, title = "", subtitle = "") {
+  p <- data %>%
+    dplyr::mutate(pred = pred) %>%
+    ggplot(data = ., mapping = aes(x = x1, y = x2)) +
+    scale_color_manual(values = c(
+      "#00AFBB", "#FC4E07", "#e7b800", "#006400", "#9400D3", "#FF8C00",
+      "#008080"
+    )) +
+    scale_shape_manual(values = c(15, 21, 2)) +
+    geom_point(
+      mapping = aes(color = pred %>% factor(), shape = label %>% factor()),
+      size = 3.0, alpha = 0.4
+    ) +
+    labs(
+      title = title,
+      subtitle = subtitle,
+      x = "X1", y = "X2",
+      color = "Prediction", shape = "Ground Truth"
+    ) +
+    theme_grey()
+  return(p)
+}
+```
+
+Training-testing holdout:
+
+```{r}
+#' training-testing dataset holdout
+#'
+#' @param data whole data
+#' @param ratio testing data ratio
+#'
+#' @return a vector representing testing data indices
+holdout <- function(data, ratio) {
+  n_rec <- nrow(data)
+  n_test <- round(ratio * n_rec, 0)
+  indices_shuffled <- sample(seq(1, n_rec), replace = FALSE)
+  return(indices_shuffled[1:n_test])
+}
+```
+
+Get decision boundary of a linear SVM model:
+
+```{r}
+#' get boundary of a SVM model when scale=T
+#'
+#' @param mdl SVM model of e1071
+#'
+#' @return a list containing slope and interception
+get_boundary <- function(mdl) {
+  # scaled weights
+  w_ <- t(mdl$coefs) %*% mdl$SV
+  # scaled intercept
+  b_ <- -mdl$rho
+  # original weights
+  w <- w_ / mdl$x.scale$`scaled:scale`
+  # original intercept
+  b <- -mdl$rho -
+    sum(w_ * mdl$x.scale$`scaled:center` / mdl$x.scale$`scaled:scale`)
+  return(list(slope = -w[1] / w[2], intercept = -b / w[2]))
+}
+```
+
+scaling:
+
+$$\mathrm{z} = \frac{\mathrm{x} - \mathrm{\mu}}{\mathrm{\sigma}}$$
+
+Known scaled:
+
+$${\mathrm{w}'}^T \cdot \mathrm{z} + b' = 0$$
+Unknown un-scaled:
+
+$$\mathrm{w}^T \cdot \mathrm{x} + b = 0$$
+Put $z$ back:
+
+$${\mathrm{w}'}^T \cdot \frac{\mathrm{x} - \mathrm{\mu}}{\mathrm{\sigma}} +
+b' = 0$$
+
+Rearrange:
+
+$${\mathrm{w}'}^T \frac{\mathrm{x}}{\mathrm{\sigma}} -
+{\mathrm{w}'}^T \frac{\mathrm{\mu}}{\sigma} + b' = 0$$
+
+## A Trivial One
+
+Dataset:
+
+```{r}
+set.seed(42)
+dat <- (function() {
+  n <- 1000
+  # Mean and covariance for class 1
+  mean1 <- c(20, 20)
+  sigma1 <- matrix(c(6.0, 0.2, 0.2, 7.0), ncol = 2)
+  # Mean and covariance for class 2
+  mean2 <- c(30, 30)
+  sigma2 <- matrix(c(4.0, -0.7, -0.7, 5.0), ncol = 2)
+  data1 <- mvtnorm::rmvnorm(n / 2, mean1, sigma1)
+  data2 <- mvtnorm::rmvnorm(n / 2, mean2, sigma2)
+  rbind(
+    data.frame(x1 = data1[, 1], x2 = data1[, 2], label = 1),
+    data.frame(x1 = data2[, 1], x2 = data2[, 2], label = -1)
+  ) %>%
+    dplyr::mutate(prob = ifelse(label == 1, 1, 0))
+})()
+
+plot_data(dat)
+```
+
+### Linear SVM
+
+model:
+
+```{r}
+te_idx <- holdout(dat, 0.3)
+dat_tr <- dat[-te_idx, ]
+dat_te <- dat[te_idx, ]
+
+mdl_svm <- e1071::svm(label ~ x1 + x2,
+  data = dat_tr, kernel = "linear",
+  cost = 1, scale = TRUE
+)
+
+pred_svm_te <- predict(mdl_svm, dat_te) %>% sign()
+beta <- get_boundary(mdl_svm)
+```
+
+MSE, confusion matrix and decision boundary:
+
+```{r}
+mean(pred_svm_te == dat_te[, "label"])
+table(dat_te[, "label"], pred_svm_te)
+beta <- get_boundary(mdl_svm)
+print(beta)
+```
+
+Training plot:
+
+```{r}
+p <- plot_data(dat_tr,
+  title = "Training Dataset",
+  subtitle = "with Linear SVM"
+)
+p + geom_abline(
+  slope = beta$slope, intercept = beta$intercept,
+  color = "purple"
+)
+```
+
+Testing plots:
+
+```{r}
+p <- plot_cls(dat_te, pred_svm_te,
+  title = "Test Dataset",
+  subtitle = "with Linear SVM"
+)
+p + geom_abline(
+  slope = beta$slope, intercept = beta$intercept,
+  color = "purple"
+)
+```
+
+### Logistic Regression
+
+```{r}
+mdl_lr <- glm(prob ~ x1 + x2,
+  data = dat_tr, family = binomial,
+)
+pred_lr_te <- local({
+  prob <- predict(mdl_lr, dat_te, type = "response")
+  ifelse(prob > 0.5, 1, -1)
+})
+mean(pred_lr_te == dat_te[, "label"])
+plot_cls(dat_te, pred_lr_te)
+coef_lr <- (function() {
+  coef_ <- list()
+  coef_raw <- coef(mdl_lr)
+  coef_$slope <- -coef_raw[2] / coef_raw[3]
+  coef_$intercept <- -coef_raw[1] / coef_raw[3]
+  return(coef_)
+})()
+```
+
+Plot against testing dataset:
+
+```{r}
+p +
+  geom_abline(
+    slope = beta$slope, intercept = beta$intercept,
+    color = "purple"
+  ) +
+  geom_abline(
+    slope = coef_lr$slope, intercept = coef_lr$intercept,
+    color = "red"
+  )
+```
+
+## Kernel Trick
+
+```{r}
+# -----------------------------------------------------------------------------
+# kernel trick
+# -----------------------------------------------------------------------------
+dat2 <- local({
+  # Define the number of observations
+  n <- 1000
+  # 1. circle data
+  df1 <- local({
+    r <- 5
+    cx <- 3
+    cy <- 4
+    a <- 1.5
+    b <- 0.8
+    # standard deviation of the noise
+    sd_noise <- 0.2
+    # Generate x values randomly
+    x <- runif(n / 2, (3 - a * r), (3 + a * r))
+    # Rearrange the equation to solve for y: y = sqrt(3 - (x-3)^2) + 4
+    # We consider only positive square root, as we're assuming y >= 4
+    y <- b^2 * sqrt(b^2 * (r^2 - (x - cx)^2 / a^2)) + cy
+    # Add normally distributed noise
+    x_noise <- x + rnorm(n / 2, mean = 0, sd = sd_noise)
+    y_noise <- y + rnorm(n / 2, mean = 0, sd = sd_noise)
+    # Bind the data into a data frame
+    data.frame(x1 = x_noise, x2 = y_noise, label = 1)
+  })
+  # 2. Gaussian data
+  df2 <- local({
+    mean2 <- c(3, 4.5)
+    sigma2 <- matrix(c(4.5, 0.05, 0.05, 0.4), ncol = 2)
+    data <- mvtnorm::rmvnorm(n / 2, mean2, sigma2)
+    data.frame(x1 = data[, 1], x2 = data[, 2], label = -1)
+  })
+  rbind(df1, df2) %>%
+    dplyr::mutate(prob = ifelse(label == 1, 1, 0))
+})
+plot_data(dat2)
+
+te_idx <- holdout(dat2, 0.3)
+dat_tr <- dat2[-te_idx, ]
+dat_te <- dat2[te_idx, ]
+
+mdl_svm <- e1071::svm(label ~ x1 + x2,
+  data = dat_tr, kernel = "radial", degree = 8,
+  cost = 100, scale = TRUE
+)
+
+# lable vs. prediction
+pred_svm_te <- predict(mdl_svm, dat_te) %>% sign()
+mean(pred_svm_te == dat_te[, "label"])
+plot_cls(dat_te, pred_svm_te)
+
+
+ggplot(data = dat_tr, aes(x = x1, y = x2, color = label)) +
+  scale_color_manual(values = c(
+    "#00AFBB", "#FC4E07", "#e7b800", "#006400", "#9400D3", "#FF8C00",
+    "#008080"
+  )) +
+  geom_point(mapping = aes(color = label %>% factor())) +
+  geom_point(
+    data = dat_tr[mdl_svm$index, ], mapping = aes(x = x1, y = x2),
+    color = "purple", size = 4, alpha = 0.5
+  ) +
+  labs(title = "SVM Support Vector Distribution") +
+  theme(legend.title = element_blank())
+
+beta <- get_boundary(mdl_svm)
+
+plot_cls(dat_te, pred_svm_te,
+  title = "SVM RBF Kernel Performance",
+  subtitle = "with non-linear separable data"
+)
+```

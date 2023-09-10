@@ -1,0 +1,182 @@
+---
+title: "ISLR-R: 6. Association Analysis"
+output:
+  prettydoc::html_pretty:
+    toc: true
+    theme: cayman
+    highlight: github
+    df_print: paged
+date: "2023-05-17"
+editor_options:
+  markdown:
+    wrap: 79
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+import::from(magrittr, "%>%", "%$%", .into = "operators")
+```
+
+## Association Analysis using the Apriori algorithm
+
+> need the `arules` package.
+
+We can then read in the .csv file, converting it to a list of transactions:
+
+```{r fig.height=12, fig.width=12}
+data <- arules::read.transactions(
+  file = "../data/Basket1.txt",
+  format = "basket", sep = ","
+)
+arules::inspect(data)
+```
+
+### Frequent Item Sets
+
+We can mine the frequent itemsets, view all the frequent itemsets, and view the
+five most frequent itemsets with the greatest support using the following code:
+
+```{r}
+items <- arules::apriori(data,
+  parameter = list(
+    support = 0.4,
+    confidence = 0.8, target = "frequent itemsets"
+  )
+)
+arules::inspect(items)
+arules::inspect(arules::sort(items, by = "support")[1:5])
+# cex.names adjusts the size of the labels on the bars
+arules::itemFrequencyPlot(data, support = 0.1, cex.names = 0.8)
+```
+
+### Maximal Frequent Item Sets
+
+We can mine the maximal frequent itemsets, and view all the maximal frequent
+itemsets using this code:
+
+```{r}
+MaxFreqItemsets <- arules::apriori(data,
+  parameter = list(
+    support = 0.3,
+    target = "maximally frequent itemsets"
+  )
+)
+arules::inspect(MaxFreqItemsets)
+summary(MaxFreqItemsets)
+```
+
+### Closed Frequent Item Sets
+
+We can mine the closed frequent itemsets, and view all the closed frequent
+itemsets using this code:
+
+```{r}
+ClosedFreqItemsets <- arules::apriori(data,
+  parameter = list(
+    support = 0.4,
+    target = "closed frequent itemsets"
+  )
+)
+summary(ClosedFreqItemsets)
+arules::inspect(ClosedFreqItemsets)
+```
+
+### Rules
+
+We can mine the association rules, view all the rules, and view the five rules
+which have the highest confidence as follows:
+
+```{r}
+rules <- arules::apriori(data,
+  parameter = list(
+    minlen = 2, support = 0.4,
+    confidence = 0.8, target = "rules"
+  )
+)
+arules::inspect(rules)
+summary(rules)
+arules::inspect(arules::sort(rules, by = "confidence")[1:5])
+```
+
+Finally, we can find particular rules using this code:
+
+```{r}
+rules <- arules::apriori(data,
+  parameter = list(
+    minlen = 2, support = 0.4,
+    confidence = 0.8, target = "rules"
+  ),
+  appearance = list(default = "lhs", rhs = "Milk")
+)
+summary(rules)
+arules::inspect(arules::sort(rules, by = "confidence"))
+```
+
+You can type `?apriori` in the console and then click on 'APappearance' to see
+how to extract more complicated rules.
+
+### Interpretation
+
+Parameters:
+
+- additional rules
+  - `arem`: additional rule evaluation measure
+  - `minval`: its minimal value
+  - `aval`: whether to compute additional evaluation measures
+- `originalSupport`:  indicating whether or not use the original definition of
+  minimum support
+  - If set to `TRUE` (which is the default), the support of a rule is
+    considered as the frequency of both the LHS and RHS of the rule appearing
+    together in the transactions.
+  - If set to `FALSE`, the support of a rule is considered as the frequency of
+    just the LHS of the rule appearing in the transactions (also known as the
+    coverage of the rule).
+- `minlen`: minimum number of items that a rule must have.
+- `maxlen`: maximum number of items that a rule can have.
+- `maxtime`: time limit in seconds for checking subsets.
+  `0` disables the time limit. (default: `5`)
+
+Target:
+
+- `frequent itemsets`: frequency of occurrence is defined by the support
+  parameter, which is a threshold percentage. (no confidence)
+- `rules`: both support and confidence
+- `max`: none of its immediate supersets are frequent
+- `closed`: none of its immediate supersets have the same support count
+- maximally frequent itemsets are the largest sets of items that frequently
+  appear together, while closed frequent itemsets are those that don't have any
+  immediate supersets with the same support count.
+
+### Formula
+
+$$\rm{Supp} (X \cup Y) = \frac{\sigma(X \cup Y)}{N} = Pr(X, Y)$$
+$$\rm{Conf} (X \to Y) = \frac{\sigma(X \cup Y)}{\sigma(X)} = Pr(Y | X)$$
+$$\rm{Lift} (X \to Y) =
+\frac{\rm{Conf}(X \to Y)}{\rm{Supp} (Y)} = \frac{Pr(X, Y)}{Pr(X)Pr(Y)}$$
+
+## Other data sets to play with for association analysis
+
+These are much larger, real-world data sets.
+
+```{r}
+# 1. Adult Census Income Database
+data("Adult", package = "arules")
+Adult %>% head()
+# 2. Groceries data set contains 1 month (30 days) of real-world point-of-sale
+# transaction data
+data("Groceries", package = "arules")
+Groceries
+```
+
+To read a random CSV file:
+
+```{r, eval=FALSE}
+ds <- arules::read.transactions(
+  file = "yet_another_flat_file.csv",
+  format = "single",
+  sep = ",",
+  cols = c("Transaction ID", "Item Code"),
+  rm.duplicates = T,
+  header = T
+)
+```

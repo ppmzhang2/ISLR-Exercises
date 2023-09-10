@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>ISLR-R: Review 01</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="STAT316-462" />
+    <meta name="date" content="2023-03-15" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link rel="stylesheet" href="static/css/custom-xaringan.css" type="text/css" />
+    <link rel="stylesheet" href="static/css/custom-xaringan-extra.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+name: title
+class: left bottom hide-count
+
+&lt;!-- Title Slide --&gt;
+
+&lt;!-- &lt;div class="talk-logo"&gt;&lt;/div&gt; --&gt;
+
+.talk-meta[
+
+.talk-title[
+  # ISLR-R: Review 01
+  Environment Setup and Linear Regression
+]
+
+.talk-author[
+  STAT316-462&lt;br&gt;
+  .gray-light[.small[.blue-medium[UC].blue[ :: ].blue-light[Mathematics and Statistics]]]
+]
+
+.talk-date.gray-light[
+  2023-03-15
+]
+]
+
+.title-image[]
+
+&lt;style type="text/css"&gt;
+.title-image {
+  width: 150px;
+  height: 150px;
+  position: absolute;
+  top: 3%;
+  left: 2%;
+  background-image: url('static/images/xaringan.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: contain;
+}
+.h-center {
+  margin: 0 auto;
+}
+.v-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.w-30 {
+  width: 30%;
+}
+.w-70 {
+  width: 70%;
+}
+&lt;/style&gt;
+
+&lt;!-- Slide Logo and Slide Border ----
+
+All slides except "title" and "inverse" slides
+have the Color Bar and logo.
+
+Additional classes are provided to disable both:
+
+- `class: no-logo` hides the logo
+- `class: no-border` hides the border
+
+or to force either to be shown
+
+- `class: slide-logo` shows the logo
+- `class: slide-border` shows the border
+--&gt;
+
+---
+### Before Loading Data
+
+--
+
+It has to be in the same directory / folder as the RMarkdown file (the *working
+directory*), so R knows where to find it.
+
+--
+
+- check working directory
+
+
+```r
+getwd()
+```
+
+```
+## [1] "/Users/runner/work/ISLR-Exercises/ISLR-Exercises/rmd"
+```
+
+--
+
+- change working directory
+
+  - you can change it via RStudio: `tools` - `global options` - `general`
+  
+  - or, a more programmatic way:  `setwd("/path/you/prefer")`
+  
+---
+###  Importing a data set stored as a `.csv` file
+
+--
+
+- `read.csv` is a command that can be used to import csv files
+
+- how:  run the `help` command
+
+--
+
+
+```r
+help(read.csv)
+?read.csv
+```
+
+--
+
+Check the usage on the RHS `help` tab:
+
+
+```r
+read.csv(file,
+  header = TRUE, sep = ",", quote = "\"",
+  dec = ".", fill = TRUE, comment.char = "", ...
+)
+```
+
+---
+### Exercise
+
+--
+
+Load the data set `Auto.csv` by completing the code below
+
+
+```r
+df &lt;- read.csv("../data/Auto.csv")
+```
+
+--
+
+If that has worked, there should now be an entry `data` in the environment
+window (usually top right window of RStudio)
+
+---
+### Exercise
+
+--
+
+1. What is the number of rows and columns in the table?
+   Answer: \_\_\_\_\_\_\_\_\_\_
+
+2. Direct Follow-up: How many cars are there in the data set?
+  Answer: \_\_\_\_\_\_\_\_\_\_
+
+3. What are the names of the columns in the table?
+   Answer: \_\_\_\_\_\_\_\_\_\_ 
+   
+4. There is one categorical (i.e. non-numerical) column in this data set.
+   Which is it? Answer: \_\_\_\_\_\_\_\_\_\_
+
+--
+
+- Good Practice
+
+  - look at your loaded data set to see what it looks like
+  
+  - commands can help you: `summary`, `View`, `names`, `dim`
+  
+  - Type them in the code block to see their result (or run `help` on them to
+    get additional information).
+
+---
+### Basic Data Frame handling
+
+**Exercise:**
+
+1.  Save the entries of the column `horsepower` in the data set `df` into a new variable called `hp`. Recall that the `&lt;-` or the `=` operator (both are very similar) allow to assign new variables.
+
+2.  Compute the mean horsepower in the data set. You can use the command `mean` for that (run `help(mean)` for documentation), or compute it yourself. Print the result to the console using the `print` command. Answer: The mean horsepower in the data set is \_\_\_\_\_\_\_\_\_\_
+
+3.  Apply the `summary` command to `hp` as well to see what it does. What do you think `Min.` and `Max.` are?
+
+---
+### Solution
+
+
+```r
+hp &lt;- df$horsepower
+print(mean(hp))
+```
+
+```
+## [1] 104.4694
+```
+
+```r
+summary(hp)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    46.0    75.0    93.5   104.5   126.0   230.0
+```
+
+---
+### Exercise - Basic plotting
+
+Plot again `mpg` against `horsepower`, but:
+
+1. no lines, only markers, but use triangles instead of the "rings" above.
+   *Hint: Try different numbers `n` for the plotting option* `pch=n`
+
+2. The markers should be red
+
+3. label the x-axis "Horsepower" and the y-axis "Miles per Gallon"
+
+4. The limits of the x-axis of the plot should be `\([0, 250]\)`
+
+5. Add a straight line with intercept `\(50\)` and slope `\(-0.1\)` to the plot.
+
+   - Figure out how to do that by consulting the `help` documentation for
+     `abline`
+     
+   - Note: `abline` needs to be called *after* having called `plot`;
+     change the intercept and the slope until you get something resembles the
+     best affine-linear regression.
+
+---
+### Linear Regression with `R`
+
+--
+
+- Fuel efficiency (`mpg`) against power (`horsepower`)
+
+--
+
+- Our affine linear regression function will be of form
+
+`mpg` = `\(\beta_0\)` + `\(\beta_1 \cdot\)` `horsepower`
+
+---
+### Linear Regression with `R` - formula
+
+`formula` specifies the proposed form for the regression function.
+
+-  `mpg ~ horsepower`
+
+   - shorthand for the affine-linear model:
+     `mpg` = `\(\beta_0\)` + `\(\beta_1 \cdot\)` `horsepower`
+
+-  `mpg ~ horsepower + 0`
+
+   - no interception: `mpg` = `\(\beta_1\cdot\)` `horsepower`
+
+-  `mpg ~ horsepower + I(horsepower^2)`:
+
+   - `mpg` = `\(\beta_0 + \beta_1 \cdot\)` `horsepower` +
+     `\(\beta_2 \cdot\)` `horsepower` `\(\cdot\)` `horsepower`
+     
+   - without `I`, operators like `+` and `*` are used to indicate interaction terms
+
+---
+### Result Interpretation
+
+--
+
+
+```r
+fit &lt;- lm(mpg ~ horsepower, df)
+```
+
+--
+
+the first argument is formula, the second is dataset
+
+--
+- `lm` method
+
+  - coefficients
+  
+  - residuals (i.e. the errors between the response and the training data)
+  
+  - standard errors for the coefficients
+  
+  - a handle on the regression function that you can use to predict response values for (e.g. test) data.
+
+---
+### Train vs. Validation vs. Test
+
+- holding back `\(25 \%\)` of the data
+
+- judge our regression later
+
+- randomize this procedure
+
+--
+
+
+```r
+N_REC &lt;- dim(df)[1]
+RATIO_TEST &lt;- 0.25
+N_TEST &lt;- round(RATIO_TEST * N_REC, 0) # 98
+
+indices_shuffled &lt;- sample(seq(1, N_REC), replace = FALSE)
+test_indices &lt;- indices_shuffled[1:N_TEST] # test with firt 98
+train_indices &lt;- indices_shuffled[(N_TEST + 1):N_REC] # rest for training
+df_test &lt;- df[test_indices, ]
+df_train &lt;- df[train_indices, ]
+```
+
+---
+### Training
+
+
+How well did you do when you fitted `\(\beta_0\)` and `\(\beta_1\)` by hand in the plotting exercise above?
+
+**Exercise:**
+
+Plot again `mpg` against `horsepower`, but:
+
+-   only those in the training set
+
+-   choose the graphical options of `plot` to your liking (maybe consult again `help(plot)` to get some ideas)
+
+-   use `abline` to plot the fitted affine-linear model from above on top of the training data. You can use the convenient shorthands for the coefficients for intercept and slope.
+
+---
+### Solution (1)
+
+
+```r
+fit &lt;- lm(mpg ~ horsepower, df_train)
+coeffs &lt;- coefficients(fit)
+print(coeffs)
+```
+
+```
+## (Intercept)  horsepower 
+##  39.8677290  -0.1565531
+```
+
+```r
+beta0 &lt;- coeffs[1]
+beta1 &lt;- coeffs[2]
+```
+
+---
+### Solution (2)
+
+
+```r
+plot(df_train$horsepower, df_train$mpg,
+  pch = 2, col = "red", xlab = "Horsepower", ylab = "Miles per Gallon",
+  xlim = c(0, 250)
+)
+abline(beta0, beta1)
+```
+
+&lt;img src="islr_lab_review_01_files/figure-html/unnamed-chunk-10-1.png" width="100%" /&gt;
+
+---
+### Judging Linear Regression Model - T-Test
+
+--
+
+t-test statistic is
+
+`$$t = \frac{\beta_1 - 0}{\mathrm{SE}_{\beta_1}}$$`
+
+--
+
+standard error (slope, inversely proportional to the amount of data)
+
+`$$\mathrm{SE}_{\beta_1} =
+\sqrt{
+  \frac{ \sum_{i=1}^n (y_i - \hat{y})^2 }
+  { (n-2) \sum_{i=1}^n (x_i - \bar{x})^2 }
+}$$`
+
+---
+### Judging Linear Regression Model - R
+
+
+```r
+summary(fit)
+```
+
+```
+## 
+## Call:
+## lm(formula = mpg ~ horsepower, data = df_train)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -13.5959  -3.3674  -0.3848   2.8260  16.9082 
+## 
+## Coefficients:
+##              Estimate Std. Error t value            Pr(&gt;|t|)    
+## (Intercept) 39.867729   0.837159   47.62 &lt;0.0000000000000002 ***
+## horsepower  -0.156553   0.007554  -20.73 &lt;0.0000000000000002 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 4.961 on 292 degrees of freedom
+## Multiple R-squared:  0.5953,	Adjusted R-squared:  0.5939 
+## F-statistic: 429.5 on 1 and 292 DF,  p-value: &lt; 0.00000000000000022
+```
+
+---
+### Exercise
+
+The goal of this exercise is to perform a linear regression of form
+
+`acceleration` = `\(\beta_0\)` + `\(\beta_1\cdot\)` `year`
+
+---
+### Walkthrough
+
+- Visualize: what can expect with the linear regression
+
+- Fit the affine-linear model
+
+- Visualize the fitted regression function jointly with the training data.
+
+- Run `summary`
+
+  - Is there a parameter which seems to be statistically *in*significant?
+
+- Judging from the coefficients, answer questions:
+
+  - "How quickly did the `acceleration` of cars (at least the ones considered in the data set) increase in a time span of 10 years on average?"
+
+  - "what acceleration would we expect cars to have in the year 2023"
+
+---
+### Exercise
+
+The goal of this exercise is to go back to the relationship between `horsepower` and `mpg`. Recall that we fitted a linear regression model of form
+
+`mpg` = `\(\beta_0\)` + `\(\beta_1\cdot\)` `horsepower`
+
+already, and now we will compare that to a model of form
+
+`mpg` = `\(\beta_0\)` + `\(\beta_1\cdot\)` `horsepower` + `\(\beta_2\cdot\)` `horsepower^2`
+
+i.e. a quadratic model. We would like to see whether the quadratic or the affine-linear regression works better.
+
+Take all your knowledge and practice from the previous exercises to fit such a model, and compare the two regression variants in terms of their training and test MSEs.
+
+---
+### Solution
+
+
+```r
+fit3 &lt;- lm(mpg ~ horsepower + I(horsepower^2), df_train)
+summary(fit3)
+```
+
+```
+## 
+## Call:
+## lm(formula = mpg ~ horsepower + I(horsepower^2), data = df_train)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -14.6339  -2.7258  -0.0332   2.2795  15.6427 
+## 
+## Coefficients:
+##                   Estimate Std. Error t value             Pr(&gt;|t|)    
+## (Intercept)     55.7050380  2.1313689  26.136 &lt; 0.0000000000000002 ***
+## horsepower      -0.4452738  0.0369434 -12.053 &lt; 0.0000000000000002 ***
+## I(horsepower^2)  0.0011552  0.0001452   7.953   0.0000000000000405 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 4.504 on 291 degrees of freedom
+## Multiple R-squared:  0.6676,	Adjusted R-squared:  0.6653 
+## F-statistic: 292.2 on 2 and 291 DF,  p-value: &lt; 0.00000000000000022
+```
+
+---
+### Solution
+
+
+```r
+y_pred_linear &lt;- predict(fit, df_test)
+mse_linear &lt;- mean((y_pred_linear - df_test$mpg)^2)
+sprintf("Linear Model: MSE=%s, s2=%s", mse_linear, summary(fit)$adj.r.squared)
+```
+
+```
+## [1] "Linear Model: MSE=22.4739927711167, s2=0.593914736232606"
+```
+
+
+```r
+y_pred_quad &lt;- predict(fit3, df_test)
+mse_quad &lt;- mean((y_pred_quad - df_test$mpg)^2)
+sprintf("Linear Model: MSE=%s, s2=%s", mse_quad, summary(fit3)$adj.r.squared)
+```
+
+```
+## [1] "Linear Model: MSE=15.8162772740489, s2=0.665280581547929"
+```
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "atom-one-light",
+"highlightLanguage": ["r", "yaml"],
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

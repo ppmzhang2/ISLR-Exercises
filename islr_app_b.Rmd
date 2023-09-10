@@ -1,0 +1,148 @@
+---
+title: "Appendix B. Rmarkdown Slides"
+subtitle: "with a little help of xaringan"
+author:
+  - John Doe
+institute:
+  ".small[.blue-medium[Institute].blue[ :: ].blue-light[Department]]"
+date: 'Feb 26, 2023'
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: [static/css/custom-xaringan.css, static/css/custom-xaringan-extra.css]
+    seal: false
+    nature:
+      titleSlideClass: ["bottom", "left"]
+      slideNumberFormat: "%current%"
+      highlightStyle: atom-one-light
+      highlightLanguage: [r, yaml]
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  hiline = TRUE
+)
+```
+
+name: title
+class: left bottom hide-count
+
+<!-- Title Slide -->
+
+<!-- <div class="talk-logo"></div> -->
+
+.talk-meta[
+
+.talk-title[
+  # `r rmarkdown::metadata$title`
+  `r rmarkdown::metadata$subtitle`
+]
+
+.talk-author[
+  `r paste(rmarkdown::metadata$author, collapse = " &middot; ")`<br>
+  .gray-light[`r paste(rmarkdown::metadata$institute, collapse = ", ")`]
+]
+
+.talk-date.gray-light[
+  `r knitr::knit(text = rmarkdown::metadata$date)`
+]
+]
+
+.talk-logo[]
+
+.title-image[]
+
+```{css echo=FALSE}
+/* Define title slide image or logo here */
+.talk-logo {
+  width: 250px;
+  height: 250px;
+  position: absolute;
+  bottom: 3%;
+  right: 2%;
+  background-image: url('static/images/shit.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: contain;
+}
+```
+
+<!-- Slide Logo and Slide Border ----
+
+All slides except "title" and "inverse" slides
+have the Color Bar and logo.
+
+Additional classes are provided to disable both:
+
+- `class: no-logo` hides the logo
+- `class: no-border` hides the border
+
+or to force either to be shown
+
+- `class: slide-logo` shows the logo
+- `class: slide-border` shows the border
+-->
+
+---
+### Slide Title
+
+* Topic 1
+
+--
+
+* Topic 2
+
+--
+
+* Topic 3
+
+--
+
+* Topic with Pictures
+
+.h-center.w-30[
+![](static/images/fun.gif)
+]
+
+---
+### Reference
+
+Inspired by [this slides](https://github.com/tgerke/github-actions-with-r).
+
+```{css, echo=FALSE}
+.title-image {
+  width: 150px;
+  height: 150px;
+  position: absolute;
+  top: 3%;
+  left: 2%;
+  background-image: url('static/images/xaringan.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: contain;
+}
+.h-center {
+  margin: 0 auto;
+}
+.v-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.w-30 {
+  width: 30%;
+}
+.w-70 {
+  width: 70%;
+}
+```

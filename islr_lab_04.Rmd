@@ -1,0 +1,328 @@
+---
+title: "ISLR-R: 4. Cross-Validation and the Bootstrap"
+output:
+  prettydoc::html_pretty:
+    toc: true
+    theme: cayman
+    highlight: github
+    df_print: paged
+date: "2023-04-25"
+editor_options:
+  markdown:
+    wrap: 79
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+import::from(magrittr, "%>%", "%$%", .into = "operators")
+# import dataset
+import::from(ISLR, Auto)
+import::from(ISLR, Portfolio)
+```
+
+In this lab you will work through Section 5.3.
+
+## The Validation Set Approach
+
+The first thing to do is to load the necessary package and briefly explore the data set called **Auto**
+
+```{r}
+set.seed(10)
+Auto %>% summary()
+```
+
+```{r}
+names(Auto)
+Auto[1:4, ]
+```
+
+```{r}
+horsepower <- Auto$horsepower
+mpg <- Auto$mpg
+horselims <- range(horsepower)
+horsepower.grid <- seq(from = horselims[1], to = horselims[2])
+```
+
+Define the training sample. Define the training sample
+
+```{r}
+train <- sample(392, 196)
+
+# Fit first order polynomial
+lm.fit <- lm(mpg ~ horsepower, data = Auto, subset = train)
+mean((mpg - predict(lm.fit, Auto))[-train]^2)
+
+# Fit a second order polynomial
+lm.fit2 <- lm(mpg ~ poly(horsepower, 2), data = Auto, subset = train)
+mean((mpg - predict(lm.fit2, Auto))[-train]^2)
+preds2 <- predict(lm.fit2, newdata = list(horsepower = horsepower.grid))
+
+# Fit a third order polynomial
+lm.fit3 <- lm(mpg ~ poly(horsepower, 3), data = Auto, subset = train)
+mean((mpg - predict(lm.fit3, Auto))[-train]^2)
+preds3 <- predict(lm.fit3, newdata = list(horsepower = horsepower.grid))
+```
+
+Plotting:
+
+```{r}
+Auto %$% plot(horsepower, mpg)
+points(horsepower[train], mpg[train], col = "red")
+abline(lm.fit, col = "orange", lwd = 3)
+lines(horsepower.grid, preds2, col = "green", lwd = 3)
+lines(horsepower.grid, preds3, col = "purple", lwd = 3)
+```
+
+## k-Fold Cross-Validation
+
+Here we are going to do the k-Fold Cross-Validation
+
+- Use K-fold Cross-Validation (CV) when:
+  - large dataset
+  - model hard to train
+- Use Leave-One-Out Cross-Validation (LOOCV) when:
+  - small dataset
+  - easy to train
+
+```{r}
+set.seed(1)
+cv.error.10 <- rep(0, 10)
+for (i in 1:10) {
+  glm.fit <- glm(mpg ~ poly(horsepower, i), data = Auto)
+  cv.error.10[i] <- boot::cv.glm(Auto, glm.fit, K = 10)$delta[1]
+}
+```
+
+Calculate and plot the error:
+```{r}
+cv.error.10
+plot(1:10, cv.error.10, type = "b", col = "red")
+```
+
+### One SE Rule
+
+Prepare dataset:
+
+```{r}
+data <- Auto %>%
+  dplyr::select("mpg", "horsepower") %>%
+  dplyr::mutate(const = 1) %>%
+  dplyr::mutate(horsepower2 = horsepower^2) %>%
+  dplyr::mutate(horsepower3 = horsepower^3) %>%
+  dplyr::mutate(horsepower4 = horsepower^4) %>%
+  dplyr::mutate(horsepower5 = horsepower^5) %>%
+  dplyr::mutate(horsepower6 = horsepower^6) %>%
+  dplyr::mutate(horsepower7 = horsepower^7) %>%
+  dplyr::mutate(horsepower8 = horsepower^8)
+```
+
+models
+
+```{r}
+control <- caret::trainControl(
+  method = "cv",
+  number = 10, savePredictions = "final"
+)
+get_model <- function(formula) {
+  caret::train(formula,
+    data = data, method = "lm", trControl = control
+  )
+}
+mdl_00 <- get_model(mpg ~ const + 0)
+mdl_01 <- get_model(mpg ~ horsepower + const + 0)
+mdl_02 <- get_model(mpg ~ horsepower2 + horsepower + const + 0)
+mdl_03 <- get_model(mpg ~ horsepower3 + horsepower2 + horsepower + const + 0)
+mdl_04 <- get_model(
+  mpg ~ horsepower4 + horsepower3 + horsepower2 + horsepower + const + 0
+)
+mdl_05 <- get_model(
+  mpg ~ horsepower5 + horsepower4 + horsepower3 + horsepower2 + horsepower + const + 0
+)
+mdl_06 <- get_model(
+  mpg ~ horsepower6 + horsepower5 + horsepower4 + horsepower3 + horsepower2 + horsepower + const + 0
+)
+mdl_07 <- get_model(
+  mpg ~ horsepower7 + horsepower6 + horsepower5 + horsepower4 + horsepower3 + horsepower2 + horsepower + const + 0
+)
+mdl_08 <- get_model(
+  mpg ~ horsepower8 + horsepower7 + horsepower6 + horsepower5 + horsepower4 + horsepower3 + horsepower2 + horsepower + const + 0
+)
+# Calculate the residuals for each fold
+res_00 <- mdl_00$pred$obs - mdl_00$pred$pred
+res_01 <- mdl_01$pred$obs - mdl_01$pred$pred
+res_02 <- mdl_02$pred$obs - mdl_02$pred$pred
+res_03 <- mdl_03$pred$obs - mdl_03$pred$pred
+res_04 <- mdl_04$pred$obs - mdl_04$pred$pred
+res_05 <- mdl_05$pred$obs - mdl_05$pred$pred
+res_06 <- mdl_06$pred$obs - mdl_06$pred$pred
+res_07 <- mdl_07$pred$obs - mdl_07$pred$pred
+res_08 <- mdl_08$pred$obs - mdl_08$pred$pred
+# Calculate the MSE for each fold
+mse_00 <- tapply(res_00^2, mdl_00$pred$Resample, mean)
+mse_01 <- tapply(res_01^2, mdl_01$pred$Resample, mean)
+mse_02 <- tapply(res_02^2, mdl_02$pred$Resample, mean)
+mse_03 <- tapply(res_03^2, mdl_03$pred$Resample, mean)
+mse_04 <- tapply(res_04^2, mdl_04$pred$Resample, mean)
+mse_05 <- tapply(res_05^2, mdl_05$pred$Resample, mean)
+mse_06 <- tapply(res_06^2, mdl_06$pred$Resample, mean)
+mse_07 <- tapply(res_07^2, mdl_07$pred$Resample, mean)
+mse_08 <- tapply(res_08^2, mdl_08$pred$Resample, mean)
+
+ds_mse <- data.frame(mse_00, mse_01, mse_02, mse_03, mse_04, mse_05, mse_06, mse_07, mse_08)
+boxplot(ds_mse)
+```
+
+### Yet Another Model Selection (L2-MSE)
+
+```{r}
+get_indices <- function(ratio, n_rec) {
+  n_sample <- round(ratio * n_rec, 0)
+  return(sample(n_rec, n_sample))
+}
+
+N_REC <- data %>% nrow()
+
+get_x <- function(ds, predictor, response) {
+  model.matrix(eval(parse(text = paste(response, "~", predictor))),
+    data = ds,
+  )
+}
+
+get_y <- function(ds) {
+  ds$mpg
+}
+
+get_beta <- function(x, y) {
+  solve(t(x) %*% x) %*% (t(x) %*% y)
+}
+
+idx_test <- get_indices(0.25, N_REC)
+ds_tr <- data[-idx_test, ]
+ds_te <- data[idx_test, ]
+
+y_tr <- get_y(ds_tr)
+x1_tr <- get_x(ds_tr, "horsepower + const + 0", "mpg")
+x2_tr <- get_x(ds_tr, "horsepower2 + horsepower + const + 0", "mpg")
+x3_tr <- get_x(
+  ds_tr,
+  "horsepower3 + horsepower2 + horsepower + const + 0", "mpg"
+)
+x4_tr <- get_x(
+  ds_tr,
+  "horsepower4 + horsepower3 + horsepower2 + horsepower + const + 0", "mpg"
+)
+
+y_te <- get_y(ds_te)
+x1_te <- get_x(ds_te, "horsepower + const + 0", "mpg")
+x2_te <- get_x(ds_te, "horsepower2 + horsepower + const + 0", "mpg")
+x3_te <- get_x(
+  ds_te,
+  "horsepower3 + horsepower2 + horsepower + const + 0", "mpg"
+)
+x4_te <- get_x(
+  ds_te,
+  "horsepower4 + horsepower3 + horsepower2 + horsepower + const + 0", "mpg"
+)
+
+beta1 <- get_beta(x1_tr, y_tr)
+beta2 <- get_beta(x2_tr, y_tr)
+beta3 <- get_beta(x3_tr, y_tr)
+
+get_l2_mse <- function(x, y, beta, lambda = 0.001) {
+  mean((y - x %*% beta)^2) + lambda * (t(beta) %*% beta)[1]
+}
+
+l2mse_0 <- mean((y_te - mean(y_te))^2)
+l2mse_1 <- get_l2_mse(x1_te, y_te, beta1)
+l2mse_2 <- get_l2_mse(x2_te, y_te, beta2)
+l2mse_3 <- get_l2_mse(x3_te, y_te, beta3)
+
+cat(l2mse_0, l2mse_1, l2mse_2, l2mse_3)
+```
+
+## The Bootstrap 
+
+Let's bootstrap some "data set".
+
+A function to calculate the optimal value (minimum variance)
+```{r}
+alpha <- function(data) {
+  X <- data$X
+  Y <- data$Y
+  return((var(Y) - cov(X, Y)) / (var(X) + var(Y) - 2 * cov(X, Y)))
+}
+alpha(Portfolio)
+```
+What is the standard error of alpha?
+```{r}
+alpha.fn <- function(data, index) {
+  X <- data$X[index]
+  Y <- data$Y[index]
+  return((var(Y) - cov(X, Y)) / (var(X) + var(Y) - 2 * cov(X, Y)))
+}
+```
+  
+check the function
+
+```{r}
+alpha.fn(Portfolio, 1:100)
+```
+
+one iteration
+
+```{r}
+set.seed(1)
+alpha.fn(Portfolio, sample(100, 100, replace = T))
+```
+
+the bootstrap
+
+```{r}
+boot.out <- boot::boot(Portfolio, alpha.fn, R = 1000)
+boot.out
+plot(boot.out)
+```
+
+## Estimating the accuracy of a linear regression model
+
+Recall the usual linear model estimation:
+
+```{r}
+lm(mpg ~ horsepower, data = Auto) %>% summary()
+```
+
+For the Auto data set, we want to use bootstrap to estimate the accuracy of the
+linear regression model, without knowing the T-test formula:
+
+```{r}
+N_ROW <- Auto %>% nrow()
+lm.fn <- function(data, index) {
+  x <- data %$% horsepower[index]
+  y <- data %$% mpg[index]
+  b1 <- cov(x, y) / var(x)
+  b0 <- mean(y) - b1 * mean(x)
+  coef <- c(b0, b1)
+  names(coef) <- c("interception", "slope")
+  return(coef)
+}
+set.seed(1)
+```
+
+Estimate:
+
+```{r}
+lm.fn(Auto, sample(N_ROW, N_ROW, replace = F))
+```
+
+One bootstrap iteration:
+
+```{r}
+lm.fn(Auto, sample(N_ROW, N_ROW, replace = T))
+```
+
+Perform bootstrapping, and summarize the result
+
+```{r}
+res <- boot::boot(Auto, lm.fn, 100)
+res
+```
